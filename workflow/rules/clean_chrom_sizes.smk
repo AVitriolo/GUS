@@ -1,4 +1,4 @@
-rule get_chrom_sizes:
+rule clean_chrom_sizes:
     output:
         "ReferenceData/{assembly_code}.chrom.clean.sizes"
     input:

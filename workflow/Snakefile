@@ -1,0 +1,16 @@
+include: "rules/get_chrom_sizes.smk"
+include: "rules/clean_chrom_sizes.smk"
+include: "rules/sort_CpGs.smk"
+include: "rules/sort_TSSs.smk"
+include: "rules/make_CpGs_list.smk"
+include: "rules/make_TSS.smk"
+include: "rules/compute_closest_bed.smk"
+include: "rules/make_beta_matrix.smk"
+#include: "rules/.smk"
+#include: "rules/.smk"
+#include: "rules/.smk"
+#include: "rules/.smk"
+
+
+rule all:
+    input:
