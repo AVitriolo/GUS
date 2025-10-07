@@ -1,0 +1,22 @@
+cat /etc/os-release # os version
+uname -m # type of distro
+
+wget https://github.com/conda-forge/miniforge/releases/download/25.3.0-3/Miniforge3-25.3.0-3-Linux-x86_64.sh # install it
+bash Miniforge3-*.sh # run it
+
+rm Miniforge3-*.sh # remove installation script
+
+source ~/.bashrc
+
+conda --version # check conda version
+# conda update -n base conda # update to latest
+
+conda config --add channels bioconda # add channel
+conda config --add channels conda-forge # add channel
+conda config --set channel_priority strict # set priority
+
+# conda base env should be clean
+
+conda env create -f bedtools.yml
+#conda env remove -n name
+#conda env list
