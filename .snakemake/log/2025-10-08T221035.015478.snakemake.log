@@ -1,0 +1,4 @@
+Building DAG of jobs...
+WildcardError in rule filteringCpGTxCouples in file "/home/Prostate_GAS/workflow/rules/filteringCpGTxCouples.smk", line 1:
+Wildcards in input files cannot be determined from output files: (rule filteringCpGTxCouples, line 1, /home/Prostate_GAS/workflow/rules/filteringCpGTxCouples.smk)
+'assembly_code'

@@ -1,0 +1,9 @@
+name: py_ML
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - xgboost
+  - shap
+  - scikit-learn

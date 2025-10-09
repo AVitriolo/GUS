@@ -1,0 +1,84 @@
+Building DAG of jobs...
+Traceback (most recent call last):
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/cli.py", line 2147, in args_to_api
+    dag_api.printdag()
+    ~~~~~~~~~~~~~~~~^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/api.py", line 647, in _handle_no_exec
+    return method(self, *args, **kwargs)
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/api.py", line 701, in printdag
+    self.workflow_api._workflow.printdag()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/workflow.py", line 1008, in printdag
+    self._build_dag()
+    ~~~~~~~~~~~~~~~^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/workflow.py", line 1208, in _build_dag
+    async_run(self.dag.init())
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/common/__init__.py", line 100, in async_run
+    return asyncio.run(coroutine)
+           ~~~~~~~~~~~^^^^^^^^^^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/asyncio/runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 240, in init
+    job = await self.update([job], progress=progress, create_inventory=True)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1158, in update
+    await self.update_(
+    ...<5 lines>...
+    )
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1304, in update_
+    selected_job = await self.update(
+                   ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1158, in update
+    await self.update_(
+    ...<5 lines>...
+    )
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1304, in update_
+    selected_job = await self.update(
+                   ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1158, in update
+    await self.update_(
+    ...<5 lines>...
+    )
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1304, in update_
+    selected_job = await self.update(
+                   ^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+    )
+    ^
+
+  File "/home/ieo7429/miniforge3/envs/snakemake-env/lib/python3.13/site-packages/snakemake/dag.py", line 1233, in update
+    if ambiguities and not self.workflow.execution_settings.ignore_ambiguity:
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+AttributeError: 'NoneType' object has no attribute 'ignore_ambiguity'
+

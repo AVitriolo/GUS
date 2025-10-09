@@ -1,0 +1,6 @@
+Building DAG of jobs...
+MissingInputException in rule all in file "/home/Prostate_GAS/workflow/Snakefile", line 23:
+Missing input files for rule all:
+    affected files:
+        results/20251007_NT_nCpG_byTx_boxLog10.pdf
+        results/20251007_NT_nCpG_byTx_distance.pdf

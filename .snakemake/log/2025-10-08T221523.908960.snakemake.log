@@ -1,0 +1,4 @@
+Building DAG of jobs...
+WildcardError in rule make_CpG in file "/home/Prostate_GAS/workflow/rules/make_CpG.smk", line 1:
+Wildcards in input files cannot be determined from output files: (rule make_CpG, line 1, /home/Prostate_GAS/workflow/rules/make_CpG.smk)
+'assembly_codes'

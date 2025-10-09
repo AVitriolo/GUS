@@ -1,0 +1,2 @@
+FileNotFoundError in file "/home/Prostate_GAS/workflow/Snakefile", line 1:
+[Errno 2] No such file or directory: '/home/Prostate_GAS/workflow/rules/get_gencode_annotation_gff.smk'

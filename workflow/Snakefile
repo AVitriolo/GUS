@@ -1,16 +1,56 @@
+include: "rules/get_gencode_annotation.smk"
 include: "rules/get_chrom_sizes.smk"
 include: "rules/clean_chrom_sizes.smk"
+include: "rules/get_CpGs.smk"
 include: "rules/sort_CpGs.smk"
+include: "rules/get_TSSs.smk"
 include: "rules/sort_TSSs.smk"
-include: "rules/make_CpGs_list.smk"
-include: "rules/make_TSS.smk"
-include: "rules/compute_closest_bed.smk"
+include: "rules/get_closest_CpGs.smk"
+include: "rules/filter_CpGs_TSSs.smk"
 include: "rules/make_beta_matrix.smk"
-#include: "rules/.smk"
-#include: "rules/.smk"
-#include: "rules/.smk"
-#include: "rules/.smk"
 
+assembly_codes = config["assembly_codes"]
+gencode_versions = config["gencode_versions"]
+current_dates = config["current_dates"]
+tss_subsets = config["tss_subsets"]
+comparison_types = config["comparison_types"]
+sample_types = config["sample_types"]
+
+wildcard_constraints:
+    tss_subset="[^.]+"
+
+wildcard_constraints:
+    comparison_type="[^.]+"
 
 rule all:
     input:
+            expand(
+                "data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance.filtered.bed",
+                current_date=current_dates[0],
+                comparison_type=comparison_types[0],
+                assembly_code=assembly_codes[0],
+                gencode_version=gencode_versions[0],
+                tss_subset=tss_subsets[0]
+            ),
+            expand(
+                "results/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_nCpG_byTx_boxLog10.pdf",
+                current_date=current_dates[0],
+                comparison_type=comparison_types[0],
+                assembly_code=assembly_codes[0],
+                gencode_version=gencode_versions[0],
+                tss_subset=tss_subsets[0]
+            ),
+            expand(
+                "results/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_nCpG_byTx_distance.pdf",
+                current_date=current_dates[0],
+                comparison_type=comparison_types[0],
+                assembly_code=assembly_codes[0],
+                gencode_version=gencode_versions[0],
+                tss_subset=tss_subsets[0]
+            ),
+            expand(
+                "resources/CpG_data/{current_date}_{assembly_code}_CpGs_beta_{sample_type}.txt",
+                assembly_code = assembly_codes[0],
+                current_date=current_dates[0],
+                sample_type=sample_types
+            )

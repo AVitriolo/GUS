@@ -1,2 +1,18 @@
 assembly_codes:
- - hg19
+ - hg38
+
+gencode_versions:
+ - 49
+
+current_dates:
+ - 20251007
+
+tss_subsets:
+ - pc
+
+comparison_types:
+ - NT
+
+sample_types:
+ - N
+ - T

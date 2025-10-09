@@ -1,8 +1,8 @@
 rule clean_chrom_sizes:
     output:
-        "ReferenceData/{assembly_code}.chrom.clean.sizes"
+        "resources/reference_data/{assembly_code}.chrom.clean.sizes"
     input:
-        "ReferenceData/{assembly_code}.chrom.sizes"
+        "resources/reference_data/{assembly_code}.chrom.sizes"
     shell:
         """
 	    cat {input} | grep -v "_" > {output} 

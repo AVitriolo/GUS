@@ -1,11 +1,12 @@
 rule sort_CpGs:
     output:
-        "resources/reference_data/"
+        "resources/CpG_data/{current_date}_{assembly_code}_CpGs_coord_{comparison_type}.sorted.bed"
     input:
-        "resources/reference_data/"
+        "resources/CpG_data/{current_date}_{assembly_code}_CpGs_coord_{comparison_type}.bed"
     conda:
         "../envs/bedtools.yml"
     shell:
         """
 	     sortBed -i {input} > {output}
         """
+        

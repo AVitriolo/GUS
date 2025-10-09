@@ -1,0 +1,2 @@
+RuleException in file "/home/Prostate_GAS/workflow/rules/filteringCpGTxCouples.smk", line 1:
+Not all output, log and benchmark files of rule filteringCpGTxCouples contain the same wildcards. This is crucial though, in order to avoid that two or more jobs write to the same file.

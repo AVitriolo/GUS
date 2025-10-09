@@ -1,0 +1,3 @@
+NameError in file "/home/Prostate_GAS/workflow/Snakefile", line 54:
+name 'assembly_code' is not defined
+  File "/home/Prostate_GAS/workflow/Snakefile", line 54, in <module>

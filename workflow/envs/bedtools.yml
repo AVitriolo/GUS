@@ -1,4 +1,4 @@
-name: basics_GAS
+name: bedtools
 channels:
   - conda-forge
   - bioconda
