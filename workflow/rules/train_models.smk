@@ -1,11 +1,11 @@
 rule train_models:
     output:
-        plot_path="results/plots/ML/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}.pdf",
-        r2_path="results/performance/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_r2_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}",
-        obs_pred_path="results/obs_pred/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_obs_pred_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}",
-        sel_feats_path="results/sel_feats/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_sel_feats_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
+        plot_path="results/plots/ML/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}.pdf",
+        r2_path="results/performance/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_r2_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}",
+        obs_pred_path="results/obs_pred/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_obs_pred_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}",
+        sel_feats_path="results/sel_feats/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_sel_feats_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
     input:
-        "data/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgbInput_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
+        "data/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgbInput_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
     conda:
         "../envs/py_ML.yml"
     shell:

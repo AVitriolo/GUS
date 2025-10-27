@@ -27,6 +27,7 @@ leftCount_betas = config["leftCount_betas"]
 rightCount_betas = config["rightCount_betas"]
 minCount_exprs = config["minCount_exprs"]
 minSamples_betas = config["minSamples_betas"]
+minCovs = config["minCovs"]
 minSamples_exprs = config["minSamples_exprs"]
 Ks = config["Ks"]
 
@@ -34,7 +35,7 @@ Ks = config["Ks"]
 rule all:
     input:
         expand(
-            "results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt",
+            "results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt",
             current_date=current_dates[0],
             comparison_type=comparison_types[0],
             assembly_code=assembly_codes[0],
@@ -46,6 +47,7 @@ rule all:
             leftCount_beta = leftCount_betas,
             rightCount_beta = rightCount_betas,
             minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
             minCount_expr=minCount_exprs[0],
             minSamples_expr=minSamples_exprs[0],
             K=Ks
@@ -53,10 +55,10 @@ rule all:
 
 checkpoint filter_selected_TxIDs:
     output:
-        "resources/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_filtered_selected_TxIDs"
+        "resources/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
     input:
         selected_TxIDs="resources/TxIDs/selected_TxIDs",
-        filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}.filtered.bed",
+        filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.filtered.bed",
         kallisto="resources/RNA/kallisto_counts_filtered_{minCount_expr}_{minSamples_expr}.tsv"
     conda:
         "envs/r_CpGs.yml"
@@ -84,7 +86,8 @@ def get_txids_after_checkpoint(wildcards):
         sample_type=wildcards.sample_type,
         leftCount_beta=wildcards.leftCount_beta,
         rightCount_beta=wildcards.rightCount_beta,
-        minSamples_beta=wildcards.minSamples_beta
+        minSamples_beta=wildcards.minSamples_beta,
+        minCov=wildcards.minCov
     ).output[0]
     
     with open(checkpoint_output) as f:
@@ -104,6 +107,7 @@ def get_txids_after_checkpoint(wildcards):
                 leftCount_beta = wildcards.leftCount_beta,
                 rightCount_beta = wildcards.rightCount_beta,
                 minSamples_beta = wildcards.minSamples_beta,
+                minCov = wildcards.minCov,
                 minCount_expr=wildcards.minCount_expr,
                 minSamples_expr=wildcards.minSamples_expr,
                 K=wildcards.K
@@ -115,7 +119,7 @@ rule run_all_models:
     input:
         get_txids_after_checkpoint
     output:
-        all_done_txid="results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt"
+        all_done_txid="results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt"
     shell:
         """
         echo {input} >> {output.all_done_txid}
@@ -125,4 +129,5 @@ wildcard_constraints:
     tss_subset="[^.]+",
     comparison_type="[^.]+",
     distance = "[0-9]+",
-    minSamples_beta = "[0-9]+"
+    minSamples_beta = "[0-9]+",
+    minCov = "[0-9]+"
