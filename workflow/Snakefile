@@ -1,0 +1,126 @@
+from snakemake.io import expand
+
+include: "rules/get_gencode_annotation.smk"
+#include: "rules/get_CpGs.smk"
+include: "rules/sort_CpGs.smk"
+include: "rules/get_TSSs.smk"
+include: "rules/sort_TSSs.smk"
+include: "rules/get_closest_CpGs.smk"
+include: "rules/filter_CpGs_TSSs.smk"
+include: "rules/make_beta_matrix.smk"
+include: "rules/get_transcriptome.smk"
+include: "rules/get_CpGs_by_TxID.smk"
+include: "rules/subset_beta_matrix.smk"
+include: "rules/train_models.smk"
+include: "rules/generate_datasets.smk"
+include: "rules/filter_counts.smk"
+
+assembly_codes = config["assembly_codes"]
+gencode_versions = config["gencode_versions"]
+current_dates = config["current_dates"]
+tss_subsets = config["tss_subsets"]
+comparison_types = config["comparison_types"]
+sample_types = config["sample_types"]
+distances = config["distances"]
+min_CpGs = config["min_CpGs"]
+leftCount_betas = config["leftCount_betas"]
+rightCount_betas = config["rightCount_betas"]
+minCount_exprs = config["minCount_exprs"]
+minSamples_betas = config["minSamples_betas"]
+minSamples_exprs = config["minSamples_exprs"]
+Ks = config["Ks"]
+
+
+rule all:
+    input:
+        expand(
+            "results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt",
+            current_date=current_dates[0],
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks
+        )
+
+checkpoint filter_selected_TxIDs:
+    output:
+        "resources/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_filtered_selected_TxIDs"
+    input:
+        selected_TxIDs="resources/TxIDs/selected_TxIDs",
+        filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}.filtered.bed",
+        kallisto="resources/RNA/kallisto_counts_filtered_{minCount_expr}_{minSamples_expr}.tsv"
+    shell:
+        """
+        Rscript workflow/scripts/filter_selected_TxIDs.R \
+        --input_path_selected_TxIDs={input.selected_TxIDs} \
+        --input_path_filtered_TxIDs_num_CpGs={input.filtered_TxIDs_num_CpGs} \
+        --input_path_kallisto={input.kallisto} \
+        --output_path={output}
+        """
+
+def get_txids_after_checkpoint(wildcards):
+    """Wait for checkpoint to complete, then read TxIDs"""
+    checkpoint_output = checkpoints.filter_selected_TxIDs.get(
+        current_date=wildcards.current_date,
+        comparison_type=wildcards.comparison_type,
+        assembly_code=wildcards.assembly_code,
+        gencode_version=wildcards.gencode_version,
+        tss_subset=wildcards.tss_subset,
+        distance=wildcards.distance,
+        min_CpG=wildcards.min_CpG,
+        minCount_expr=wildcards.minCount_expr,
+        minSamples_expr=wildcards.minSamples_expr,
+        sample_type=wildcards.sample_type,
+        leftCount_beta=wildcards.leftCount_beta,
+        rightCount_beta=wildcards.rightCount_beta,
+        minSamples_beta=wildcards.minSamples_beta
+    ).output[0]
+    
+    with open(checkpoint_output) as f:
+        txids = [x.rstrip() for x in f.readlines()]
+        plot_model_output = rules.train_models.output.plot_path
+        plot_model_outputs = expand(
+                plot_model_output,
+                TxID=txids,
+                current_date=wildcards.current_date,
+                comparison_type=wildcards.comparison_type,
+                assembly_code=wildcards.assembly_code,
+                gencode_version=wildcards.gencode_version,
+                tss_subset=wildcards.tss_subset,
+                distance=wildcards.distance,
+                min_CpG = wildcards.min_CpG,
+                sample_type=wildcards.sample_type,
+                leftCount_beta = wildcards.leftCount_beta,
+                rightCount_beta = wildcards.rightCount_beta,
+                minSamples_beta = wildcards.minSamples_beta,
+                minCount_expr=wildcards.minCount_expr,
+                minSamples_expr=wildcards.minSamples_expr,
+                K=wildcards.K
+                )
+
+        return plot_model_outputs
+
+rule run_all_models:
+    input:
+        get_txids_after_checkpoint
+    output:
+        all_done_txid="results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """       
+
+wildcard_constraints:
+    tss_subset="[^.]+",
+    comparison_type="[^.]+",
+    distance = "[0-9]+",
+    minSamples_beta = "[0-9]+"

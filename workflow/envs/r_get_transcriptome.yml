@@ -1,0 +1,11 @@
+name: r_CpGTheGathering
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-essentials
+  - r-r.utils
+  - bioconductor-limma
+  - bioconductor-edger

@@ -1,0 +1,42 @@
+assembly_codes:
+ - hg38
+
+gencode_versions:
+ - 49
+
+current_dates:
+ - 20251016
+
+tss_subsets:
+ - pc
+
+comparison_types:
+ - NT
+
+sample_types:
+ - N
+ 
+distances:
+ - 2500
+
+min_CpGs:
+ - 5
+
+leftCount_betas:
+  - 0.25
+
+rightCount_betas:
+  - 0.75
+
+minCount_exprs:
+  - 20
+
+minSamples_betas:
+  - 90
+
+minSamples_exprs:
+  - 10
+  
+Ks:
+  - 100
+  
