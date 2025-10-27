@@ -59,7 +59,7 @@ checkpoint filter_selected_TxIDs:
         filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}.filtered.bed",
         kallisto="resources/RNA/kallisto_counts_filtered_{minCount_expr}_{minSamples_expr}.tsv"
     conda:
-        "../envs/r_CpGs.yml"
+        "envs/r_CpGs.yml"
     shell:
         """
         Rscript workflow/scripts/filter_selected_TxIDs.R \
