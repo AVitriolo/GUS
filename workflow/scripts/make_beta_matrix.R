@@ -16,6 +16,7 @@ rse <- HDF5Array::loadHDF5SummarizedExperiment(input_path)
 coord  <- SummarizedExperiment::rowRanges(rse)
 
 beta_df <-SummarizedExperiment::assay(rse, "beta")
+#cov_df <- SummarizedExperiment::assay(rse, "cov")
 
 rm(rse); gc()
 
