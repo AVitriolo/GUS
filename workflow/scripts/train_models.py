@@ -7,6 +7,7 @@ import pandas
 import numpy
 import scipy.stats
 import matplotlib.pyplot
+import shap
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--n_jobs_xgboost', dest='n_jobs_xgboost', type=int, help='Add n_jobs_xgboost')
@@ -27,6 +28,7 @@ parser.add_argument('--output_path_plot', dest='output_path_plot', type=str, hel
 parser.add_argument('--output_path_r2', dest='output_path_r2', type=str, help='Add output_path_r2')
 parser.add_argument('--output_path_obs_pred', dest='output_path_obs_pred', type=str, help='Add output_path_obs_pred')
 parser.add_argument('--output_path_sel_feats', dest='output_path_sel_feats', type=str, help='Add output_path_sel_feats')
+# parser.add_argument('--output_path_feat_imp', dest='output_path_feat_imp', type=str, help='Add output_path_feat_imp')
 
 
 args = parser.parse_args()
@@ -85,7 +87,7 @@ for random_init in random_inits_xgboost:
 		optimizer.fit(X_train, y_train)
 		model = optimizer.best_estimator_
 
-		if bool_feature_selection:
+		if bool_feature_selection: #do feature selection
 
 			feature_names = model.feature_names_in_
 			feature_importance = model.feature_importances_
@@ -101,15 +103,17 @@ for random_init in random_inits_xgboost:
 						plot = True, 
 						verbose = True)
 			
-			if len(output) == 2:
+			if len(output) == 2: # if no feature gets selected, the best prediction XGBoost can make is the average prediction
 
-				avg_observation, selected_features = output[0], output[1] 
+				avg_observation, selected_features = output[0], output[1]
 				predictions = numpy.repeat(avg_observation, y_train.shape[0])
 
-				obs_pred_table = pandas.concat([
+				obs_pred_table = pandas.concat(
+					[
 				pandas.Series(y_train, name='Observed').reset_index(drop=True),
 				pandas.Series(predictions, name='Predicted').reset_index(drop=True)
-				], axis=1)
+					], 
+					axis=1)
 
 				obs_pred_table.to_csv(args.output_path_obs_pred, sep = "\t", header=True, doublequote=False)
 
@@ -121,11 +125,14 @@ for random_init in random_inits_xgboost:
 					for feature in selected_features:
 						fp.write(str(feature) + "\n")
 
+				with open(args.output_path_feat_imp, 'w') as fp:
+    				pass
+
 				exit(0)
 
-			else:
+			else: # a best subset exists
 				X_train_reduced, X_test_reduced, selected_features = output[0], output[1], output[2]
-		else:
+		else: # skip feature selection
 			X_train_reduced, X_test_reduced = X_train, X_test
 			selected_features = X_train_reduced.columns.tolist()
 			matplotlib.pyplot.figure()
@@ -135,17 +142,33 @@ for random_init in random_inits_xgboost:
 			matplotlib.pyplot.close()
 
 		model = model.fit(X_train_reduced, y_train)
+
+		# booster = model.get_booster()
+		# importance_weight = booster.get_score(importance_type = "weight")
+		# importance_gain = booster.get_score(importance_type = "gain")
+		# importance_cover = booster.get_score(importance_type = "cover")
+
+		# explainer = shap.TreeExplainer(model, approximate = False)
+		# shap_values = explainer.shap_values(X_train_reduced)
+		# features_for_shap = X_train_reduced.columns.tolist()
+		# mean_abs_shap = np.mean(np.abs(shap_values), axis = 0).tolist()
+		# importance_shap = {features_for_shap[i]:mean_abs_shap[i] for i in range(0, len(features_for_shap))}
+
+		# feature_importance_df = pandas.DataFrame([importance_weight, importance_gain, importance_cover, importance_shap], index = ["weight", "gain", "cover", "shap"])
+		# feature_importance_df.to_csv(args.output_path_feat_imp, sep = "\t", header=True, doublequote=False)
+
 		predictions = model.predict(X_train_reduced)
 
-		obs_pred_table = pandas.concat([
+		obs_pred_table = pandas.concat(
+			[
 		pandas.Series(y_train, name='Observed').reset_index(drop=True),
 		pandas.Series(predictions, name='Predicted').reset_index(drop=True)
-		], axis=1)
+			], 
+			axis=1)
 
 		obs_pred_table.to_csv(args.output_path_obs_pred, sep = "\t", header=True, doublequote=False)
 
 		r2 = sklearn.metrics.r2_score(y_train, predictions)
-
 		with open(args.output_path_r2, 'w') as fp:
 			fp.write(str(r2))
 

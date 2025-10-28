@@ -1,7 +1,6 @@
 from snakemake.io import expand
 
 include: "rules/get_gencode_annotation.smk"
-#include: "rules/get_CpGs.smk"
 include: "rules/sort_CpGs.smk"
 include: "rules/get_TSSs.smk"
 include: "rules/sort_TSSs.smk"
@@ -30,6 +29,7 @@ minSamples_betas = config["minSamples_betas"]
 minCovs = config["minCovs"]
 minSamples_exprs = config["minSamples_exprs"]
 Ks = config["Ks"]
+selected_txIDs_location = config["selected_txIDs_location"][0]
 
 
 rule all:
@@ -57,7 +57,7 @@ checkpoint filter_selected_TxIDs:
     output:
         "resources/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
     input:
-        selected_TxIDs="resources/TxIDs/selected_TxIDs",
+        selected_TxIDs=selected_txIDs_location,
         filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.filtered.bed",
         kallisto="resources/RNA/kallisto_counts_filtered_{minCount_expr}_{minSamples_expr}.tsv"
     conda:
