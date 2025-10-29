@@ -4,6 +4,8 @@ rule generate_datasets:
     input:
         subsetted_beta="data/{current_date}_{assembly_code}_CpGs_beta_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_subsetted_{TxID}",
         transcriptome="data/RNA/{current_date}_{sample_type}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{TxID}_transcriptome"
+    conda:
+        "../envs/r_CpGs.yml"
     shell:
         """
         Rscript workflow/scripts/generate_datasets.R \

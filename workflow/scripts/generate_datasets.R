@@ -35,8 +35,6 @@ topKCpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:K])
 Cols2keep <- cbind(topKCpGs,TxID)
 BetaExpr.f <- BetaExpr[,which(colnames(BetaExpr) %in% Cols2keep)]
 
-print(paste0(TxID, "finished processing"))
-print(paste0(TxID, "written table"))
 write.table(BetaExpr.f,
 		file=output_path,
 		col.names = T,

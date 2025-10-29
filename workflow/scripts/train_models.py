@@ -29,6 +29,8 @@ parser.add_argument('--output_path_r2', dest='output_path_r2', type=str, help='A
 parser.add_argument('--output_path_obs_pred', dest='output_path_obs_pred', type=str, help='Add output_path_obs_pred')
 parser.add_argument('--output_path_sel_feats', dest='output_path_sel_feats', type=str, help='Add output_path_sel_feats')
 # parser.add_argument('--output_path_feat_imp', dest='output_path_feat_imp', type=str, help='Add output_path_feat_imp')
+# parser.add_argument('--output_path_hyper', dest='output_path_hyper', type=str, help='Add output_path_hyper')
+
 
 
 args = parser.parse_args()
@@ -86,6 +88,12 @@ for random_init in random_inits_xgboost:
 
 		optimizer.fit(X_train, y_train)
 		model = optimizer.best_estimator_
+		# best_hyperparams = optimizer.best_params_
+
+		# with open(args.output_path_hyper, 'w') as fp:
+		# 	for k,v in best_hyperparams.items():
+		# 		row = k + "\t" + str(v) + "\n"
+		# 		fp.write(row)
 
 		if bool_feature_selection: #do feature selection
 
