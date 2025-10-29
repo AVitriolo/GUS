@@ -28,10 +28,8 @@ parser.add_argument('--output_path_plot', dest='output_path_plot', type=str, hel
 parser.add_argument('--output_path_r2', dest='output_path_r2', type=str, help='Add output_path_r2')
 parser.add_argument('--output_path_obs_pred', dest='output_path_obs_pred', type=str, help='Add output_path_obs_pred')
 parser.add_argument('--output_path_sel_feats', dest='output_path_sel_feats', type=str, help='Add output_path_sel_feats')
-# parser.add_argument('--output_path_feat_imp', dest='output_path_feat_imp', type=str, help='Add output_path_feat_imp')
-# parser.add_argument('--output_path_hyper', dest='output_path_hyper', type=str, help='Add output_path_hyper')
-
-
+parser.add_argument('--output_path_feat_imp', dest='output_path_feat_imp', type=str, help='Add output_path_feat_imp')
+parser.add_argument('--output_path_hyper', dest='output_path_hyper', type=str, help='Add output_path_hyper')
 
 args = parser.parse_args()
 
