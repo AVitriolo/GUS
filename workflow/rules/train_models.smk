@@ -7,7 +7,7 @@ rule train_models:
         feat_imp_path="results/feat_imp/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_sel_feats_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}",
         hyper_path="results/hyper/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_sel_feats_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
     input:
-        "data/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgbInput_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
+        "data/xgb/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{TxID}"
     conda:
         "../envs/py_ML.yml"
     shell:

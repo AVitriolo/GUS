@@ -13,6 +13,7 @@ include: "rules/subset_beta_matrix.smk"
 include: "rules/train_models.smk"
 include: "rules/generate_datasets.smk"
 include: "rules/filter_counts.smk"
+include: "rules/generate_feature_heatmap.smk"
 
 assembly_codes = config["assembly_codes"]
 gencode_versions = config["gencode_versions"]
@@ -30,7 +31,6 @@ minCovs = config["minCovs"]
 minSamples_exprs = config["minSamples_exprs"]
 Ks = config["Ks"]
 selected_txIDs_location = config["selected_txIDs_location"][0]
-
 
 rule all:
     input:
@@ -55,7 +55,7 @@ rule all:
 
 checkpoint filter_selected_TxIDs:
     output:
-        "resources/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
+        "resources/TxIDs/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
     input:
         selected_TxIDs=selected_txIDs_location,
         filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.filtered.bed",

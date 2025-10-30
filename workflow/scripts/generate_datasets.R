@@ -6,7 +6,8 @@ input_transcriptome                      <- args$input_transcriptome
 input_subset_beta                        <- args$input_subset_beta
 TxID									 <- args$TxID
 K                                        <- as.numeric(args$K)
-output_path 	                         <- args$output_path
+output_path_xgb 	                     <- args$output_path_xgb
+output_path_corr_table				 	 <- args$output_path_corr_table
 
 Exprs <- read.table(input_transcriptome, head=T)
 Betas <- t(read.table(input_subset_beta,head=T))
@@ -32,11 +33,21 @@ BetaExpr$sample <- NULL
 
 sd_per_value <- sapply(BetaExpr[,1:(ncol(BetaExpr)-1)], sd, na.rm = TRUE)
 topKCpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:K])
+
+correlations_table <- cor(BetaExpr[,which(colnames(BetaExpr) %in% topKCpGs)], method = "spearman", exact = F)
+
 Cols2keep <- cbind(topKCpGs,TxID)
 BetaExpr.f <- BetaExpr[,which(colnames(BetaExpr) %in% Cols2keep)]
 
+write.table(correlations_table,
+ 		file=output_path_corr_table,
+ 		col.names = T,
+ 		row.names=T,
+ 		quote=F, 
+ 		sep="\t")
+
 write.table(BetaExpr.f,
-		file=output_path,
+		file=output_path_xgb,
 		col.names = T,
 		row.names=T,
 		quote=F, 
