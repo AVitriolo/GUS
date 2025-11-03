@@ -17,16 +17,16 @@ sample_types:
  - N
  
 distances:
- - 2500
+ - 50000
 
 min_CpGs:
  - 5
 
 leftCount_betas:
-  - 0.25
+  - 0.4
 
 rightCount_betas:
-  - 0.75
+  - 0.6
 
 minCount_exprs:
   - 20
@@ -44,5 +44,5 @@ Ks:
   - 100
 
 selected_txIDs_location:
-  - "resources/TxIDs/selected_TxIDs"
+  - "resources/TxIDs/cancerGeneList_processed.tsv"
   
