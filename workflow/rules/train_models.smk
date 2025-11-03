@@ -20,7 +20,6 @@ rule train_models:
         --n_iter_rsearch=27 \
         --verbosity=2 \
         --num_features_threshold=50 \
-        --input_K=100 \
         --hypertune_random_state_rsearch=36 \
         --error_score="raise" \
         --tree_method="hist" \

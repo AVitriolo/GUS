@@ -17,7 +17,6 @@ parser.add_argument('--cv', dest='cv', type=int, help='Add cv')
 parser.add_argument('--n_iter_rsearch', dest='n_iter_rsearch', type=int, help='Add n_iter_rsearch')
 parser.add_argument('--verbosity', dest='verbosity', type=int, help='Add verbosity')
 parser.add_argument('--num_features_threshold', dest='num_features_threshold', type=int, help='Add num_features_threshold')
-parser.add_argument('--input_K', dest='input_K', type=int, help='Add input_K')
 parser.add_argument('--hypertune_random_state_rsearch', dest='hypertune_random_state_rsearch', type=int, help='Add hypertune_random_state_rsearch')
 parser.add_argument('--error_score', dest='error_score', type=str, help='Add error_score')
 parser.add_argument('--tree_method', dest='tree_method', type=str, help='Add tree_method')
@@ -61,8 +60,7 @@ for random_init in random_inits_xgboost:
 			tree_method = args.tree_method,
 			device = args.device)
 	
-	K = args.input_K if args.input_K < xgb_dataset.shape[0] else xgb_dataset.shape[0] - 2
-	X = xgb_dataset.iloc[:,0:K]
+	X = xgb_dataset.iloc[:,0:-1]
 	y = xgb_dataset.loc[:,args.TxID]
 
 	random_splits  = [25] # 14, 50, 51, 53, 80, 81, 12, 68, 20, 76, 54, 65, 85, 24, 50, 46, 20, 49, 9]
@@ -86,12 +84,12 @@ for random_init in random_inits_xgboost:
 
 		optimizer.fit(X_train, y_train)
 		model = optimizer.best_estimator_
-		# best_hyperparams = optimizer.best_params_
+		best_hyperparams = optimizer.best_params_
 
-		# with open(args.output_path_hyper, 'w') as fp:
-		# 	for k,v in best_hyperparams.items():
-		# 		row = k + "\t" + str(v) + "\n"
-		# 		fp.write(row)
+		with open(args.output_path_hyper, 'w') as fp:
+			for k,v in best_hyperparams.items():
+				row = k + "\t" + str(v) + "\n"
+				fp.write(row)
 
 		if bool_feature_selection: #do feature selection
 
@@ -149,19 +147,19 @@ for random_init in random_inits_xgboost:
 
 		model = model.fit(X_train_reduced, y_train)
 
-		# booster = model.get_booster()
-		# importance_weight = booster.get_score(importance_type = "weight")
-		# importance_gain = booster.get_score(importance_type = "gain")
-		# importance_cover = booster.get_score(importance_type = "cover")
+		booster = model.get_booster()
+		importance_weight = booster.get_score(importance_type = "weight")
+		importance_gain = booster.get_score(importance_type = "gain")
+		importance_cover = booster.get_score(importance_type = "cover")
 
-		# explainer = shap.TreeExplainer(model, approximate = False)
-		# shap_values = explainer.shap_values(X_train_reduced)
-		# features_for_shap = X_train_reduced.columns.tolist()
-		# mean_abs_shap = np.mean(np.abs(shap_values), axis = 0).tolist()
-		# importance_shap = {features_for_shap[i]:mean_abs_shap[i] for i in range(0, len(features_for_shap))}
+		explainer = shap.TreeExplainer(model, approximate = False)
+		shap_values = explainer.shap_values(X_train_reduced)
+		features_for_shap = X_train_reduced.columns.tolist()
+		mean_abs_shap = np.mean(np.abs(shap_values), axis = 0).tolist()
+		importance_shap = {features_for_shap[i]:mean_abs_shap[i] for i in range(0, len(features_for_shap))}
 
-		# feature_importance_df = pandas.DataFrame([importance_weight, importance_gain, importance_cover, importance_shap], index = ["weight", "gain", "cover", "shap"])
-		# feature_importance_df.to_csv(args.output_path_feat_imp, sep = "\t", header=True, doublequote=False)
+		feature_importance_df = pandas.DataFrame([importance_weight, importance_gain, importance_cover, importance_shap], index = ["weight", "gain", "cover", "shap"])
+		feature_importance_df.to_csv(args.output_path_feat_imp, sep = "\t", header=True, doublequote=False)
 
 		predictions = model.predict(X_train_reduced)
 
