@@ -13,7 +13,7 @@ rule make_beta_matrix:
         --output_path_beta={output.beta} \
         --output_path_CpGs={output.CpGs} \
         --sample_type={wildcards.sample_type} \
-        --minCov={wildcards.minCov}
+        --minCov={wildcards.minCov} \
         --leftCount_beta={wildcards.leftCount_beta} \
         --rightCount_beta={wildcards.rightCount_beta} \
         --minSamples_beta={wildcards.minSamples_beta}

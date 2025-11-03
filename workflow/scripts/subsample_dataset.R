@@ -4,26 +4,26 @@ options(scipen=999)                                                             
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                                        # read args
 
-input_path                               <- args$input_path
-output_path 	                         <- args$output_path
+input_path                               <- args$input_path                                               # take input path
+output_path 	                         <- args$output_path                                              # take output path
 
 CpGs <- paste0("CpG_",1:1000)                                                                             # simulate CpGs
 
 vec_sampled_avg_corr <- c()                                                                               # initialize avg correlations vector
-vec_sampled_dfs <- c()
-abs_corr_threshold <- 0.5
+vec_sampled_dfs <- c()                                                                                    # initialize sampled_dfs vector
+abs_corr_threshold <- 0.5                                                                                 # set avg correlation threshold
 
 times_sampled <- rep(x = 0, length(CpGs)); names(times_sampled) <- CpGs                                   # initialize number of CpGs sampled
 expected_sampling_prob <- rep((1 / length(CpGs)),length(CpGs))                                            # expected in uniform distribution
-B <- 1000
+B <- 1000                                                                                                 # montecarlo iterations
 significance_thr <- 0.05                                                                                  # significance threshold
 pval <- 0                                                                                                 # initialize p-value
 
 pseudocount <- 0.0001                                                                                     # pseudocount for weight calculation
 weight <- 1 / (times_sampled + pseudocount)                                                               # compute weight
-random_seed <- 123
+random_seed <- 123                                                                                        # set random seed
 
-lower_bound_CpG <- 25
+lower_bound_CpG <- 25                                                                                     # min times a CpG has to be sampled at all
 min_num_sampled <- 25                                                                                     # min number of times at least min_sampled_CpGs have to be sampled
 min_sampled_CpGs <- length(CpGs) / 2                                                                      # min number of CpGs to be sampled min_num_sampled times
 

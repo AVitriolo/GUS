@@ -130,7 +130,7 @@ for random_init in random_inits_xgboost:
 						fp.write(str(feature) + "\n")
 
 				with open(args.output_path_feat_imp, 'w') as fp:
-    				pass
+					pass
 
 				exit(0)
 
@@ -155,7 +155,7 @@ for random_init in random_inits_xgboost:
 		explainer = shap.TreeExplainer(model, approximate = False)
 		shap_values = explainer.shap_values(X_train_reduced)
 		features_for_shap = X_train_reduced.columns.tolist()
-		mean_abs_shap = np.mean(np.abs(shap_values), axis = 0).tolist()
+		mean_abs_shap = numpy.mean(numpy.abs(shap_values), axis = 0).tolist()
 		importance_shap = {features_for_shap[i]:mean_abs_shap[i] for i in range(0, len(features_for_shap))}
 
 		feature_importance_df = pandas.DataFrame([importance_weight, importance_gain, importance_cover, importance_shap], index = ["weight", "gain", "cover", "shap"])

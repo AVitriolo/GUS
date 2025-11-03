@@ -37,6 +37,7 @@ beta_df$CpG_ID = paste0("CpG_", 1:nrow(beta_df)); cov_df$CpG_ID = paste0("CpG_",
 }
 
 CpGs_with_enough_coverage <- process_cov_vals(cov_df, minCov, minSamples_beta)
+rm(cov_df); gc()
 beta_df <- process_beta_vals(beta_df, leftCount_beta, rightCount_beta, minSamples_beta)
 beta_df <- beta_df[rownames(beta_df) %in% CpGs_with_enough_coverage,]
 gc()

@@ -5,5 +5,6 @@ filterBetas <- function(counts, leftCount_beta=0.25, rightCount_beta=0.75, minSa
 	counts <- rbind(left_CpGs,right_CpGs)
 	rm(left_CpGs, right_CpGs)
 	message(paste(nb1-nrow(counts),"rows out of",nb1,"were removed [BETAS]."))
+	gc()
 	return(counts)
 }

@@ -34,7 +34,7 @@ BetaExpr$sample <- NULL
 sd_per_value <- sapply(BetaExpr[,1:(ncol(BetaExpr)-1)], sd, na.rm = TRUE)
 topKCpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:K])
 
-correlations_table <- cor(BetaExpr[,which(colnames(BetaExpr) %in% topKCpGs)], method = "spearman", exact = F)
+correlations_table <- cor(BetaExpr[,which(colnames(BetaExpr) %in% topKCpGs)], method = "spearman")
 
 Cols2keep <- cbind(topKCpGs,TxID)
 BetaExpr.f <- BetaExpr[,which(colnames(BetaExpr) %in% Cols2keep)]
