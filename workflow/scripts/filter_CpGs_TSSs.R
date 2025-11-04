@@ -1,3 +1,8 @@
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("limma")
+
 options(scipen=999)                                                               # unable scientific notation           
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                # read args

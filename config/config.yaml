@@ -14,7 +14,7 @@ comparison_types:
  - NT
 
 sample_types:
- - N
+ - T
  
 distances:
  - 50000
