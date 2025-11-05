@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   - python=3.10
-  - xgboost
+  - xgboost=3.0
   - shap
   - scikit-learn
   - scipy
