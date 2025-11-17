@@ -1,4 +1,4 @@
-def do_feature_selection(feature_names, feature_importances, model, X_train, X_test, y_train, cv, output_path_plot, plot = True, verbose = True):
+def do_feature_selection(TxID, feature_names, feature_importances, model, X_train, X_test, y_train, cv, output_path_plot, plot = True, verbose = True):
 	"""
 	This function performes incremental feature selection. First takes the feature importance (any metric),
 	and trains p (number of features) models, each time adding one feature starting from the least important one
@@ -26,7 +26,7 @@ def do_feature_selection(feature_names, feature_importances, model, X_train, X_t
 		matplotlib.pyplot.plot(num_features_list, r2_scores_list, marker='o')
 		matplotlib.pyplot.xlabel('Number of Selected Features')
 		matplotlib.pyplot.ylabel('Cross Validated mean R2')
-		matplotlib.pyplot.title('R2 vs. Number of Selected Features')
+		matplotlib.pyplot.title(f'R2 vs. Number of Selected Features [{TxID}]')
 		matplotlib.pyplot.grid(True)
 		matplotlib.pyplot.savefig(output_path_plot, dpi=300, bbox_inches='tight')
 		matplotlib.pyplot.show()
@@ -55,12 +55,12 @@ def do_feature_selection(feature_names, feature_importances, model, X_train, X_t
 		for i in range(0,len(discarded_features), n):
 			print("  ".join(discarded_features[i:i+n]))
 
-	print(selected_features)
+	#print(selected_features)
 	if len(selected_features) > 0:
 		X_train_reduced = X_train[selected_features]
 		X_test_reduced = X_test[selected_features]
 		return([X_train_reduced, X_test_reduced, selected_features])
 	else:
-		return([numpy.mean(y_train), [""]])
+		return([numpy.mean(y_train), []])
 		
 	

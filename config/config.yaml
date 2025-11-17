@@ -1,11 +1,17 @@
+sender:
+  - "gabrieleoliveto26@gmail.com"
+
+recipients:
+  - "gabrieleoliveto26@gmail.com"
+  
+app_password:
+  - "kuydqcoafjidqowr"
+
 assembly_codes:
  - hg38
 
 gencode_versions:
- - 49
-
-current_dates:
- - 20251016
+ - "49"
 
 tss_subsets:
  - pc
@@ -14,7 +20,7 @@ comparison_types:
  - NT
 
 sample_types:
- - T
+ - N
  
 distances:
  - 50000
@@ -45,4 +51,6 @@ Ks:
 
 selected_txIDs_location:
   - "resources/TxIDs/cancerGeneList_processed.tsv"
-  
+
+importances:
+  - "shap"

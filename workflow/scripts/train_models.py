@@ -24,11 +24,12 @@ parser.add_argument('--device', dest='device', type=str, help='Add device')
 parser.add_argument('--TxID', dest='TxID', type=str, help='Add TxID')
 parser.add_argument('--input_path', dest='input_path', type=str, help='Add input_path')
 parser.add_argument('--output_path_plot', dest='output_path_plot', type=str, help='Add output_path_plot')
-parser.add_argument('--output_path_r2', dest='output_path_r2', type=str, help='Add output_path_r2')
+parser.add_argument('--output_path_performance', dest='output_path_performance', type=str, help='Add output_path_performance')
 parser.add_argument('--output_path_obs_pred', dest='output_path_obs_pred', type=str, help='Add output_path_obs_pred')
 parser.add_argument('--output_path_sel_feats', dest='output_path_sel_feats', type=str, help='Add output_path_sel_feats')
 parser.add_argument('--output_path_feat_imp', dest='output_path_feat_imp', type=str, help='Add output_path_feat_imp')
 parser.add_argument('--output_path_hyper', dest='output_path_hyper', type=str, help='Add output_path_hyper')
+parser.add_argument('--output_path_shap', dest='output_path_shap', type=str, help='Add output_path_shap')
 
 args = parser.parse_args()
 
@@ -71,7 +72,6 @@ for random_init in random_inits_xgboost:
 									test_size = args.test_size, 
 									random_state = random_split)
 		
-
 		optimizer = sklearn.model_selection.RandomizedSearchCV(estimator = regressor, 
 					param_distributions = search_space,
 					cv = args.cv, 
@@ -96,16 +96,18 @@ for random_init in random_inits_xgboost:
 			feature_names = model.feature_names_in_
 			feature_importance = model.feature_importances_
 
-			output = do_feature_selection(feature_names, 
-						feature_importance, 
-						model, 
-						X_train, 
-						X_test, 
-						y_train, 
+			output = do_feature_selection(
+						TxID = args.TxID,
+						feature_names= feature_names, 
+						feature_importances = feature_importance, 
+						model = model, 
+						X_train = X_train, 
+						X_test = X_test, 
+						y_train = y_train, 
 						cv = args.cv,
 						output_path_plot=args.output_path_plot,
 						plot = True, 
-						verbose = True)
+						verbose = False)
 			
 			if len(output) == 2: # if no feature gets selected, the best prediction XGBoost can make is the average prediction
 
@@ -117,19 +119,26 @@ for random_init in random_inits_xgboost:
 				pandas.Series(y_train, name='Observed').reset_index(drop=True),
 				pandas.Series(predictions, name='Predicted').reset_index(drop=True)
 					], 
-					axis=1)
+					axis=1
+					)
+
+				obs_pred_table.index = y_train.index
 
 				obs_pred_table.to_csv(args.output_path_obs_pred, sep = "\t", header=True, doublequote=False)
 
 				r2 = sklearn.metrics.r2_score(y_train, predictions)
-				with open(args.output_path_r2, 'w') as fp:
-					fp.write(str(r2))
+				rmse = sklearn.metrics.root_mean_squared_error(y_train, predictions)
+
+				with open(args.output_path_performance, 'w') as fp:
+					fp.write("r2" + "\t" + str(r2) + "\n" + "rmse" + "\t" + str(rmse) + "\n")
 
 				with open(args.output_path_sel_feats, 'w') as fp:
-					for feature in selected_features:
-						fp.write(str(feature) + "\n")
-
+					pass
+					
 				with open(args.output_path_feat_imp, 'w') as fp:
+					pass
+
+				with open(args.output_path_shap, 'w') as fp:
 					pass
 
 				exit(0)
@@ -140,7 +149,7 @@ for random_init in random_inits_xgboost:
 			X_train_reduced, X_test_reduced = X_train, X_test
 			selected_features = X_train_reduced.columns.tolist()
 			matplotlib.pyplot.figure()
-			matplotlib.pyplot.text(0.5, 0.5, 'No data available', ha='center', va='center', fontsize=12)
+			matplotlib.pyplot.text(0.5, 0.5, f'Feature Selection skipped [{args.TxID}]', ha='center', va='center', fontsize=12)
 			matplotlib.pyplot.axis('off')
 			matplotlib.pyplot.savefig(args.output_path_plot)
 			matplotlib.pyplot.close()
@@ -154,11 +163,12 @@ for random_init in random_inits_xgboost:
 
 		explainer = shap.TreeExplainer(model, approximate = False)
 		shap_values = explainer.shap_values(X_train_reduced)
+
 		features_for_shap = X_train_reduced.columns.tolist()
 		mean_abs_shap = numpy.mean(numpy.abs(shap_values), axis = 0).tolist()
 		importance_shap = {features_for_shap[i]:mean_abs_shap[i] for i in range(0, len(features_for_shap))}
 
-		feature_importance_df = pandas.DataFrame([importance_weight, importance_gain, importance_cover, importance_shap], index = ["weight", "gain", "cover", "shap"])
+		feature_importance_df = pandas.DataFrame({"weight": importance_weight, "gain": importance_gain, "cover": importance_cover, "shap": importance_shap})
 		feature_importance_df.to_csv(args.output_path_feat_imp, sep = "\t", header=True, doublequote=False)
 
 		predictions = model.predict(X_train_reduced)
@@ -168,13 +178,21 @@ for random_init in random_inits_xgboost:
 		pandas.Series(y_train, name='Observed').reset_index(drop=True),
 		pandas.Series(predictions, name='Predicted').reset_index(drop=True)
 			], 
-			axis=1)
+			axis=1
+			)
+		
+		obs_pred_table.index = y_train.index
 
 		obs_pred_table.to_csv(args.output_path_obs_pred, sep = "\t", header=True, doublequote=False)
 
 		r2 = sklearn.metrics.r2_score(y_train, predictions)
-		with open(args.output_path_r2, 'w') as fp:
-			fp.write(str(r2))
+		rmse = sklearn.metrics.root_mean_squared_error(y_train, predictions)
+
+		with open(args.output_path_performance, 'w') as fp:
+			fp.write("r2" + "\t" + str(r2) + "\n" + "rmse" + "\t" + str(rmse) + "\n")
+
+		shap_values_df = pandas.DataFrame(shap_values, index = X_train_reduced.index, columns = X_train_reduced.columns)
+		shap_values_df.to_csv(args.output_path_shap, sep = "\t", header=True, doublequote=False)
 
 		with open(args.output_path_sel_feats, 'w') as fp:
 			for feature in selected_features:

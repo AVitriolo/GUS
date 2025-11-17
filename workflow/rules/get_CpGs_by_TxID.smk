@@ -1,9 +1,11 @@
 rule get_CpGs_by_TxID:
     output:
-        temp("data/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_CpGs_by_{TxID}")
+        temp("data/CpGs_by_TxID/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{TxID}")
     input:
-        "data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.filtered.bed",
+        "data/coord/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.distance.filtered.bed"
+    log:
+        "logs/get_CpGs_by_TxID/get_CpGs_by_TxID_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{TxID}.log"
     shell:
         """
-        grep {wildcards.TxID} {input} | cut -f 1 > {output} || echo "No matching CpGs found or {wildcards.TxID} is not in {input}"
+        grep {wildcards.TxID} {input} | cut -f 1 > {output} 2> {log} || echo "No matching CpGs found or {wildcards.TxID} is not in {input} >> {log}"
         """

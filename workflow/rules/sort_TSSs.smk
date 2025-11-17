@@ -1,12 +1,14 @@
 rule sort_TSSs:
     output:
-        "resources/reference_data/{current_date}_{assembly_code}_gencode_v{gencode_version}_tss_{tss_subset}.sorted.bed"
+        "resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}.sorted.bed"
     input:
-        "resources/reference_data/{current_date}_{assembly_code}_gencode_v{gencode_version}_tss_{tss_subset}.bed"
+        "resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}.bed"
     conda:
-        "/home/Prostate_GAS/workflow/envs/bedtools.yml"
+        "../envs/bedtools.yml"
+    log:
+        "logs/sort_TSSs/sort_TSSs_{assembly_code}_v{gencode_version}_{tss_subset}.log"
     shell:
         """
-	     bedtools sort -i {input} > {output}
+	     bedtools sort -i {input} > {output} 2> {log}
         """
         

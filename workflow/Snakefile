@@ -1,4 +1,6 @@
+import os
 from snakemake.io import expand
+from scripts.helpers.send_email import send_email
 
 include: "rules/get_gencode_annotation.smk"
 include: "rules/sort_CpGs.smk"
@@ -14,10 +16,27 @@ include: "rules/train_models.smk"
 include: "rules/generate_datasets.smk"
 include: "rules/filter_counts.smk"
 include: "rules/generate_feature_heatmap.smk"
+include: "rules/aggregate_models_output.smk"
+include: "rules/extract_CpGs_from_output.smk"
+include: "rules/generate_genome_tracks.smk"
+include: "rules/aggregate_CpGs_importance.smk"
+include: "rules/plot_models_output.smk"
+include: "rules/generate_ini_file.smk"
+include: "rules/plot_genome_tracks.smk"
+include: "rules/prepare_TSSs_to_plot_tracks.smk"
+include: "rules/get_chrom_sizes.smk"
+include: "rules/clean_chrom_sizes.smk"
+include: "rules/slop_TSSs.smk"
+include: "rules/garbage_collector.smk"
+
+sender = config["sender"][0]
+app_password = config["app_password"][0]
+recipients = config["recipients"]
+
+selected_txIDs_location = config["selected_txIDs_location"][0]
 
 assembly_codes = config["assembly_codes"]
 gencode_versions = config["gencode_versions"]
-current_dates = config["current_dates"]
 tss_subsets = config["tss_subsets"]
 comparison_types = config["comparison_types"]
 sample_types = config["sample_types"]
@@ -30,13 +49,65 @@ minSamples_betas = config["minSamples_betas"]
 minCovs = config["minCovs"]
 minSamples_exprs = config["minSamples_exprs"]
 Ks = config["Ks"]
-selected_txIDs_location = config["selected_txIDs_location"][0]
+importances = config["importances"]
 
 rule all:
     input:
         expand(
-            "results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt",
-            current_date=current_dates[0],
+            "results/checks/garbage_collector/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}",
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks,
+            importance=importances
+        ),
+        expand(
+            "results/plots/ML/hyper/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}.pdf",
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks
+        ),
+        expand(
+            "results/plots/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}",
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks,
+            importance=importances
+        ),
+        expand(
+            "results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}",
             comparison_type=comparison_types[0],
             assembly_code=assembly_codes[0],
             gencode_version=gencode_versions[0],
@@ -53,28 +124,30 @@ rule all:
             K=Ks
         )
 
+
 checkpoint filter_selected_TxIDs:
     output:
-        "resources/TxIDs/{current_date}_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
+        "resources/TxIDs/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
     input:
         selected_TxIDs=selected_txIDs_location,
-        filtered_TxIDs_num_CpGs="data/{current_date}_CpGs_coord_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}.TSS.distance_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.filtered.bed",
-        kallisto="resources/RNA/kallisto_counts_filtered_{minCount_expr}_{minSamples_expr}.tsv"
+        filtered_TxIDs_num_CpGs="data/coord/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.distance.filtered.bed",
+        kallisto="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv"
     conda:
         "envs/r_CpGs.yml"
+    log:
+        "logs/filter_selected_TxIDs/filter_selected_TxIDs_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.log"
     shell:
         """
         Rscript workflow/scripts/filter_selected_TxIDs.R \
         --input_path_selected_TxIDs={input.selected_TxIDs} \
         --input_path_filtered_TxIDs_num_CpGs={input.filtered_TxIDs_num_CpGs} \
         --input_path_kallisto={input.kallisto} \
-        --output_path={output}
+        --output_path={output} 2> {log}
         """
 
-def get_txids_after_checkpoint(wildcards):
-    """Wait for checkpoint to complete, then read TxIDs"""
-    checkpoint_output = checkpoints.filter_selected_TxIDs.get(
-        current_date=wildcards.current_date,
+def txids_from_checkpoint(wildcards):
+    """Return list of TxIDs from checkpoint output (cached)."""
+    chk_output = checkpoints.filter_selected_TxIDs.get(
         comparison_type=wildcards.comparison_type,
         assembly_code=wildcards.assembly_code,
         gencode_version=wildcards.gencode_version,
@@ -89,45 +162,107 @@ def get_txids_after_checkpoint(wildcards):
         minSamples_beta=wildcards.minSamples_beta,
         minCov=wildcards.minCov
     ).output[0]
-    
-    with open(checkpoint_output) as f:
-        txids = [x.rstrip() for x in f.readlines()]
-        plot_model_output = rules.train_models.output.plot_path
-        plot_model_outputs = expand(
-                plot_model_output,
-                TxID=txids,
-                current_date=wildcards.current_date,
-                comparison_type=wildcards.comparison_type,
-                assembly_code=wildcards.assembly_code,
-                gencode_version=wildcards.gencode_version,
-                tss_subset=wildcards.tss_subset,
-                distance=wildcards.distance,
-                min_CpG = wildcards.min_CpG,
-                sample_type=wildcards.sample_type,
-                leftCount_beta = wildcards.leftCount_beta,
-                rightCount_beta = wildcards.rightCount_beta,
-                minSamples_beta = wildcards.minSamples_beta,
-                minCov = wildcards.minCov,
-                minCount_expr=wildcards.minCount_expr,
-                minSamples_expr=wildcards.minSamples_expr,
-                K=wildcards.K
-                )
 
-        return plot_model_outputs
+    with open(chk_output) as f:
+        return [x.strip() for x in f]
+
+def get_txid_train_outputs(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.train_models.output.plot_path, TxID=txids, **wildcards)
+
+def get_txid_tracks_outputs(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.generate_genome_tracks.output, TxID=txids, **wildcards)
+
+def get_txid_heatmap_outputs(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.generate_feature_heatmap.output, TxID=txids, **wildcards)
 
 rule run_all_models:
     input:
-        get_txids_after_checkpoint
+        get_txid_train_outputs
     output:
-        all_done_txid="results/checks/{current_date}_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{comparison_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_xgb_output_plot_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_done.txt"
+        all_done_txid="results/checks/train/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}"
     shell:
         """
         echo {input} >> {output.all_done_txid}
-        """       
+        """
+
+rule get_tracks:
+    input:
+        get_txid_tracks_outputs
+    output:
+        all_done_txid="results/checks/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """
+
+rule plot_heatmaps:
+    input:
+        get_txid_heatmap_outputs
+    output:
+        all_done_txid="results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """
 
 wildcard_constraints:
-    tss_subset="[^.]+",
-    comparison_type="[^.]+",
+    tss_subset="[a-z]+",
+    comparison_type="[A-Z]+",
     distance = "[0-9]+",
     minSamples_beta = "[0-9]+",
-    minCov = "[0-9]+"
+    minCov = "[0-9]+",
+    gencode_version="[0-9]+",
+    minCount_expr="[0-9]+",
+    assembly_code="hg\\d{2}",
+    sample_type="[A-Z]",
+    minCpG="[0-9]+",
+    leftCount_beta="\\d+(\\.\\d+)?",
+    rightCount_beta="\\d+(\\.\\d+)?",
+    minSamples_expr="[0-9]+",
+    K="[0-9]+",
+    importance="[a-z]+"
+
+onsuccess:
+    dirs_to_clean = ["get_CpGs_by_TxID",
+                    "get_transcriptome",
+                    "subset_beta_matrix",
+                    "generate_datasets",
+                    "generate_genome_tracks",
+                    "generate_feature_heatmap",
+                    "extract_CpGs_from_output",
+                    "train_models"]
+
+    [os.system(f"cat logs/{dir}/* > logs/{dir}/{dir}_aggregated.log && rm logs/{dir}/*ENST*") for dir in dirs_to_clean]
+
+    attachments = [f"logs/{path}/{elem}" for path in os.listdir("logs/") for elem in os.listdir(f"logs/{path}/")]
+    send_email(subject = "Snakemake workflow - SUCCESS", 
+            body = "The workflow completed successfully.",
+            attachments=attachments,
+            recipients=recipients, 
+            sender=sender,
+            app_password=app_password
+    )
+
+onerror:
+    dirs_to_clean = ["get_CpGs_by_TxID",
+                    "get_transcriptome",
+                    "subset_beta_matrix",
+                    "generate_datasets",
+                    "generate_genome_tracks",
+                    "generate_feature_heatmap",
+                    "extract_CpGs_from_output",
+                    "train_models"]
+
+    [os.system(f"cat logs/{dir}/* > logs/{dir}/{dir}_aggregated.log && rm logs/{dir}/*ENST*") for dir in dirs_to_clean]
+
+    attachments = [f"logs/{path}/{elem}" for path in os.listdir("logs/") for elem in os.listdir(f"logs/{path}/")]
+    send_email(subject = "Snakemake workflow - FAILURE", 
+            body = "Check the attachments for the failing logs.",
+            attachments=attachments, 
+            recipients=recipients, 
+            sender=sender,
+            app_password=app_password
+    )
