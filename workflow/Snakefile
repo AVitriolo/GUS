@@ -28,6 +28,11 @@ include: "rules/get_chrom_sizes.smk"
 include: "rules/clean_chrom_sizes.smk"
 include: "rules/slop_TSSs.smk"
 include: "rules/garbage_collector.smk"
+include: "rules/get_mappability.smk"
+include: "rules/filter_mappability.smk"
+include: "rules/filter_beta_by_mappability.smk"
+include: "rules/filter_coords_by_mappability.smk"
+include: "rules/get_CpGs_high_mappability.smk"
 
 sender = config["sender"][0]
 app_password = config["app_password"][0]

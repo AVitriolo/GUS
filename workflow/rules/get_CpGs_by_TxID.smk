@@ -7,5 +7,5 @@ rule get_CpGs_by_TxID:
         "logs/get_CpGs_by_TxID/get_CpGs_by_TxID_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_{TxID}.log"
     shell:
         """
-        grep {wildcards.TxID} {input} | cut -f 1 > {output} 2> {log} || echo "No matching CpGs found or {wildcards.TxID} is not in {input} >> {log}"
+        grep -Fw {wildcards.TxID} {input} | cut -f 1 > {output} 2> {log} || echo "No matching CpGs found or {wildcards.TxID} is not in {input} >> {log}"
         """
