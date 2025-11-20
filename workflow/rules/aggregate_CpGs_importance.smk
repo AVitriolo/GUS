@@ -9,5 +9,5 @@ rule aggregate_CpGs_importance:
         "logs/aggregate_CpGs_importance/aggregate_CpGs_importance_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}.log"
     shell:
         """
-        cat results/genome_tracks/bed/*_{wildcards.importance}.bed | bedtools sort -i - > {output} 2> {log}
+        for file in results/genome_tracks/bed/*_{wildcards.importance}.bed; do   cat "$file"; done | bedtools sort -i - > {output} 2> {log}
         """

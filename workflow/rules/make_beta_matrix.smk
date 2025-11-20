@@ -1,6 +1,6 @@
 rule make_beta_matrix:
     output:
-        beta="resources/CpG_data/beta/{assembly_code}_{comparison_type}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.txt",
+        beta=temp("resources/CpG_data/beta/{assembly_code}_{comparison_type}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.txt"),
         CpGs="resources/CpG_data/coord/{assembly_code}_{comparison_type}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.bed"
     input:
         "resources/cpgea_wgbs_with_coverage_{assembly_code}"

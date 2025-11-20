@@ -231,6 +231,7 @@ wildcard_constraints:
     importance="[a-z]+"
 
 onsuccess:
+
     dirs_to_clean = ["get_CpGs_by_TxID",
                     "get_transcriptome",
                     "subset_beta_matrix",
@@ -240,7 +241,14 @@ onsuccess:
                     "extract_CpGs_from_output",
                     "train_models"]
 
-    [os.system(f"cat logs/{dir}/* > logs/{dir}/{dir}_aggregated.log && rm logs/{dir}/*ENST*") for dir in dirs_to_clean]
+    [
+    os.system(
+        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done"
+        f"for file in logs/{dir}/*; do if [[ $(basename $file) != {dir}_aggregated.log ]]; then rm $file fi  done"
+    )
+    for dir in dirs_to_clean
+]
+
 
     attachments = [f"logs/{path}/{elem}" for path in os.listdir("logs/") for elem in os.listdir(f"logs/{path}/")]
     send_email(subject = "Snakemake workflow - SUCCESS", 
@@ -252,6 +260,7 @@ onsuccess:
     )
 
 onerror:
+    
     dirs_to_clean = ["get_CpGs_by_TxID",
                     "get_transcriptome",
                     "subset_beta_matrix",
@@ -261,7 +270,14 @@ onerror:
                     "extract_CpGs_from_output",
                     "train_models"]
 
-    [os.system(f"cat logs/{dir}/* > logs/{dir}/{dir}_aggregated.log && rm logs/{dir}/*ENST*") for dir in dirs_to_clean]
+    [
+    os.system(
+        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done"
+        f"for file in logs/{dir}/*; do if [[ $(basename $file) != {dir}_aggregated.log ]]; then rm $file fi  done"
+    )
+    for dir in dirs_to_clean
+]
+
 
     attachments = [f"logs/{path}/{elem}" for path in os.listdir("logs/") for elem in os.listdir(f"logs/{path}/")]
     send_email(subject = "Snakemake workflow - FAILURE", 
