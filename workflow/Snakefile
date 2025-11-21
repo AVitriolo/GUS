@@ -243,8 +243,8 @@ onsuccess:
 
     [
     os.system(
-        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done"
-        f"for file in logs/{dir}/*; do if [[ $(basename $file) != {dir}_aggregated.log ]]; then rm $file fi  done"
+        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done;"
+        f"for file in logs/{dir}/*; do if [ $(basename $file) != {dir}_aggregated.log ]; then rm $file; fi  done;"
     )
     for dir in dirs_to_clean
 ]
@@ -272,8 +272,8 @@ onerror:
 
     [
     os.system(
-        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done"
-        f"for file in logs/{dir}/*; do if [[ $(basename $file) != {dir}_aggregated.log ]]; then rm $file fi  done"
+        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done;"
+        f"for file in logs/{dir}/*; do if [ $(basename $file) != {dir}_aggregated.log ]; then rm $file; fi  done;"
     )
     for dir in dirs_to_clean
 ]
