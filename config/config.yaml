@@ -3,6 +3,7 @@ sender:
 
 recipients:
   - "gabrieleoliveto26@gmail.com"
+  - "alessandro.vitriolo@ieo.it"
   
 app_password:
   - "kuydqcoafjidqowr"
@@ -23,16 +24,16 @@ sample_types:
  - N
  
 distances:
- - 50000
+ - 500000
 
 min_CpGs:
  - 5
 
 leftCount_betas:
-  - 0.4
+  - 0.5
 
 rightCount_betas:
-  - 0.6
+  - 0.5
 
 minCount_exprs:
   - 20
