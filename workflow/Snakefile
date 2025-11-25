@@ -59,7 +59,7 @@ importances = config["importances"]
 rule all:
     input:
         expand(
-	"resources/TxIDs/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs,
+            "results/checks/garbage_collector/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}",
             comparison_type=comparison_types[0],
             assembly_code=assembly_codes[0],
             gencode_version=gencode_versions[0],
@@ -72,9 +72,64 @@ rule all:
             minSamples_beta = minSamples_betas,
             minCov = minCovs[0],
             minCount_expr=minCount_exprs[0],
-            minSamples_expr=minSamples_exprs[0]
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks,
+            importance=importances
+        ),
+        expand(
+            "results/plots/ML/hyper/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}.pdf",
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks
+        ),
+        expand(
+            "results/plots/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}",
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks,
+            importance=importances
+        ),
+        expand(
+            "results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}",
+            comparison_type=comparison_types[0],
+            assembly_code=assembly_codes[0],
+            gencode_version=gencode_versions[0],
+            tss_subset=tss_subsets[0],
+            distance=distances,
+            min_CpG = min_CpGs,
+            sample_type=sample_types[0],
+            leftCount_beta = leftCount_betas,
+            rightCount_beta = rightCount_betas,
+            minSamples_beta = minSamples_betas,
+            minCov = minCovs[0],
+            minCount_expr=minCount_exprs[0],
+            minSamples_expr=minSamples_exprs[0],
+            K=Ks
         )
- 
+
+
 checkpoint filter_selected_TxIDs:
     output:
         "resources/TxIDs/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"

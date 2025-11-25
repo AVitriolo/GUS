@@ -5,7 +5,7 @@ rule aggregate_models_output:
     input:
         check="results/checks/train/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}"
     conda:
-        ""
+        "../envs/r_filter_CpGs_TSSs.yml"
     log:
         "logs/aggregate_models_output/aggregate_models_output_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}.log"
     shell:
