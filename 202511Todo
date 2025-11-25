@@ -1,0 +1,41 @@
+- Create R.utils specific conda env
+
+- Automatic elbow finder
+	top k more variable vs elbow
+
+- improve feature selection
+	in case of ties, which features?
+	CpG tournaments
+
+- create decorrelation function
+	decorrelation vs TMRs
+		-> measure correlation of TMRs first
+		-> consider a mixed set of inputs TMRs + outer CpGs
+	
+- 10:1 observation feature cutoff for sampling
+	-> see CpG tournaments
+	-> 3:1, 5:1 ratios?
+
+- Fix base_learner xgboost and shap compatibility issue
+	-> fixed by downgrading vs new approach?	
+
+- Optimize beta filtering
+	-> done?
+	-> work directly on h5 by transcript (earlier parallelization)
+
+- combined importance score
+	-> TBD
+
+- fix importance if {}
+	- empty dictionaries where no features selected
+		- temp solution: shap always generate values
+
+[ OPT ]
+- imputation for missing CpGs
+	- group CpGs (indie of associated genes) by distance from tss, correlation, TF-annotation?
+		-> infer their importance
+	
+	
+- improve density plots filtering?
+	
+- Make txID specific track plot
