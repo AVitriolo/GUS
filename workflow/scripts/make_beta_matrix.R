@@ -15,8 +15,8 @@ rightCount_beta               <- as.numeric(args$rightCount_beta)
 minSamples_beta               <- as.integer(args$minSamples_beta)
 
 rse <- HDF5Array::loadHDF5SummarizedExperiment(input_path)
-coord  <- SummarizedExperiment::rowRanges(rse)
 
+coord  <- SummarizedExperiment::rowRanges(rse)
 beta_df <-SummarizedExperiment::assay(rse, "beta")
 cov_df <- SummarizedExperiment::assay(rse, "cov")
 
