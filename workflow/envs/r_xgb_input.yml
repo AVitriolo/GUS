@@ -1,0 +1,15 @@
+name: r_xgb_input
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-essentials
+  - r-r.utils
+  - r-dplyr
+  - r-future
+  - bioconductor-genomicranges
+  - bioconductor-hdf5array
+  - bioconductor-summarizedexperiment
+  

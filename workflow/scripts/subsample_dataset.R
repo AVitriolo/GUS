@@ -7,7 +7,7 @@ args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)              
 input_path                               <- args$input_path                                               # take input path
 output_path 	                         <- args$output_path                                              # take output path
 
-CpGs <- paste0("CpG_",1:1000)                                                                             # simulate CpGs
+CpGs <- paste0("CpG_", 1:1000)                                                                            # simulate CpGs
 
 vec_sampled_avg_corr <- c()                                                                               # initialize avg correlations vector
 vec_sampled_dfs <- c()                                                                                    # initialize sampled_dfs vector

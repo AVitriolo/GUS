@@ -16,9 +16,6 @@ gencode_versions:
 tss_subsets:
  - pc
 
-comparison_types:
- - NT
-
 sample_types:
  - N
  
@@ -26,7 +23,7 @@ distances:
  - 50000
 
 min_CpGs:
- - 5
+ - 50
 
 leftCount_betas:
   - 0.4
@@ -49,8 +46,14 @@ minSamples_exprs:
 Ks:
   - 100
 
-selected_txIDs_location:
-  - "resources/TxIDs/cancerGeneList_processed.tsv"
-
 importances:
   - "shap"
+
+selected_txIDs_location:
+  - "resources/TxIDs/selected_TxIDs"
+
+use_TMRs:
+  - 1
+
+TMRs_dir:
+  - "resources/CpG_data/TMRs/"

@@ -2,48 +2,48 @@ import os
 from snakemake.io import expand
 from scripts.helpers.send_email import send_email
 
+include: "rules/filter_selected_TxIDs.smk"
+
 include: "rules/get_gencode_annotation.smk"
-include: "rules/sort_CpGs.smk"
 include: "rules/get_TSSs.smk"
 include: "rules/sort_TSSs.smk"
-include: "rules/get_closest_CpGs.smk"
-include: "rules/filter_CpGs_TSSs.smk"
-include: "rules/make_beta_matrix.smk"
-include: "rules/get_transcriptome.smk"
-include: "rules/get_CpGs_by_TxID.smk"
-include: "rules/subset_beta_matrix.smk"
+include: "rules/filter_TSSs.smk"
+
+include: "rules/filter_counts_new.smk"
+
+include: "rules/get_mappability.smk"
+include: "rules/filter_mappability.smk"
+include: "rules/filter_CpGs_by_mappability.smk"
+include: "rules/sort_CpGs.smk"
+
+include: "rules/get_K_closest_CpGs.smk"
+
+include: "rules/xgb_input.smk"
+
 include: "rules/train_models.smk"
-include: "rules/generate_datasets.smk"
-include: "rules/filter_counts.smk"
 include: "rules/generate_feature_heatmap.smk"
+
 include: "rules/aggregate_models_output.smk"
 include: "rules/extract_CpGs_from_output.smk"
 include: "rules/generate_genome_tracks.smk"
-include: "rules/aggregate_CpGs_importance.smk"
 include: "rules/plot_models_output.smk"
-include: "rules/generate_ini_file.smk"
-include: "rules/plot_genome_tracks.smk"
-include: "rules/prepare_TSSs_to_plot_tracks.smk"
+
 include: "rules/get_chrom_sizes.smk"
 include: "rules/clean_chrom_sizes.smk"
 include: "rules/slop_TSSs.smk"
+include: "rules/generate_ini_file.smk"
+#include: "rules/plot_genome_tracks.smk"
+include: "rules/prepare_TSSs_to_plot_tracks.smk"
+
 include: "rules/garbage_collector.smk"
-include: "rules/get_mappability.smk"
-include: "rules/filter_mappability.smk"
-include: "rules/filter_beta_by_mappability.smk"
-include: "rules/filter_coords_by_mappability.smk"
-include: "rules/get_CpGs_high_mappability.smk"
 
 sender = config["sender"][0]
 app_password = config["app_password"][0]
 recipients = config["recipients"]
 
-selected_txIDs_location = config["selected_txIDs_location"][0]
-
 assembly_codes = config["assembly_codes"]
 gencode_versions = config["gencode_versions"]
 tss_subsets = config["tss_subsets"]
-comparison_types = config["comparison_types"]
 sample_types = config["sample_types"]
 distances = config["distances"]
 min_CpGs = config["min_CpGs"]
@@ -53,120 +53,61 @@ minCount_exprs = config["minCount_exprs"]
 minSamples_betas = config["minSamples_betas"]
 minCovs = config["minCovs"]
 minSamples_exprs = config["minSamples_exprs"]
-Ks = config["Ks"]
 importances = config["importances"]
+
+use_TMRs = config["use_TMRs"][0]
 
 rule all:
     input:
         expand(
-            "results/checks/garbage_collector/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}",
-            comparison_type=comparison_types[0],
-            assembly_code=assembly_codes[0],
-            gencode_version=gencode_versions[0],
-            tss_subset=tss_subsets[0],
-            distance=distances,
-            min_CpG = min_CpGs,
-            sample_type=sample_types[0],
-            leftCount_beta = leftCount_betas,
-            rightCount_beta = rightCount_betas,
-            minSamples_beta = minSamples_betas,
-            minCov = minCovs[0],
-            minCount_expr=minCount_exprs[0],
-            minSamples_expr=minSamples_exprs[0],
-            K=Ks,
-            importance=importances
-        ),
+            "results/plots/ML/hyper/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+                assembly_code=assembly_codes,
+                gencode_version=gencode_versions,
+                tss_subset=tss_subsets,
+                distance=distances,
+                min_CpG = min_CpGs,
+                sample_type=sample_types,
+                leftCount_beta = leftCount_betas,
+                rightCount_beta = rightCount_betas,
+                minSamples_beta = minSamples_betas,
+                minCov = minCovs,
+                minCount_expr=minCount_exprs,
+                minSamples_expr=minSamples_exprs
+            ),
         expand(
-            "results/plots/ML/hyper/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}.pdf",
-            comparison_type=comparison_types[0],
-            assembly_code=assembly_codes[0],
-            gencode_version=gencode_versions[0],
-            tss_subset=tss_subsets[0],
-            distance=distances,
-            min_CpG = min_CpGs,
-            sample_type=sample_types[0],
-            leftCount_beta = leftCount_betas,
-            rightCount_beta = rightCount_betas,
-            minSamples_beta = minSamples_betas,
-            minCov = minCovs[0],
-            minCount_expr=minCount_exprs[0],
-            minSamples_expr=minSamples_exprs[0],
-            K=Ks
-        ),
-        expand(
-            "results/plots/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}",
-            comparison_type=comparison_types[0],
-            assembly_code=assembly_codes[0],
-            gencode_version=gencode_versions[0],
-            tss_subset=tss_subsets[0],
-            distance=distances,
-            min_CpG = min_CpGs,
-            sample_type=sample_types[0],
-            leftCount_beta = leftCount_betas,
-            rightCount_beta = rightCount_betas,
-            minSamples_beta = minSamples_betas,
-            minCov = minCovs[0],
-            minCount_expr=minCount_exprs[0],
-            minSamples_expr=minSamples_exprs[0],
-            K=Ks,
-            importance=importances
-        ),
-        expand(
-            "results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}",
-            comparison_type=comparison_types[0],
-            assembly_code=assembly_codes[0],
-            gencode_version=gencode_versions[0],
-            tss_subset=tss_subsets[0],
-            distance=distances,
-            min_CpG = min_CpGs,
-            sample_type=sample_types[0],
-            leftCount_beta = leftCount_betas,
-            rightCount_beta = rightCount_betas,
-            minSamples_beta = minSamples_betas,
-            minCov = minCovs[0],
-            minCount_expr=minCount_exprs[0],
-            minSamples_expr=minSamples_exprs[0],
-            K=Ks
-        )
+            "results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
+                assembly_code=assembly_codes,
+                gencode_version=gencode_versions,
+                tss_subset=tss_subsets,
+                distance=distances,
+                min_CpG = min_CpGs,
+                sample_type=sample_types,
+                leftCount_beta = leftCount_betas,
+                rightCount_beta = rightCount_betas,
+                minSamples_beta = minSamples_betas,
+                minCov = minCovs,
+                minCount_expr=minCount_exprs,
+                minSamples_expr=minSamples_exprs        
+            )
 
 
-checkpoint filter_selected_TxIDs:
-    output:
-        "resources/TxIDs/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_filtered_selected_TxIDs"
-    input:
-        selected_TxIDs=selected_txIDs_location,
-        filtered_TxIDs_num_CpGs="data/coord/{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.distance.filtered.bed",
-        kallisto="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv"
-    conda:
-        "envs/r_CpGs.yml"
-    log:
-        "logs/filter_selected_TxIDs/filter_selected_TxIDs_{comparison_type}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}.log"
-    shell:
-        """
-        Rscript workflow/scripts/filter_selected_TxIDs.R \
-        --input_path_selected_TxIDs={input.selected_TxIDs} \
-        --input_path_filtered_TxIDs_num_CpGs={input.filtered_TxIDs_num_CpGs} \
-        --input_path_kallisto={input.kallisto} \
-        --output_path={output} 2> {log}
-        """
 
 def txids_from_checkpoint(wildcards):
     """Return list of TxIDs from checkpoint output (cached)."""
-    chk_output = checkpoints.filter_selected_TxIDs.get(
-        comparison_type=wildcards.comparison_type,
+    chk_output = checkpoints.xgb_input.get(
         assembly_code=wildcards.assembly_code,
+        sample_type=wildcards.sample_type,
+        leftCount_beta = wildcards.leftCount_beta,
+        rightCount_beta = wildcards.rightCount_beta,
+        minSamples_beta = wildcards.minSamples_beta,
+        minCov = wildcards.minCov,
         gencode_version=wildcards.gencode_version,
         tss_subset=wildcards.tss_subset,
         distance=wildcards.distance,
-        min_CpG=wildcards.min_CpG,
+        min_CpG = wildcards.min_CpG,
         minCount_expr=wildcards.minCount_expr,
-        minSamples_expr=wildcards.minSamples_expr,
-        sample_type=wildcards.sample_type,
-        leftCount_beta=wildcards.leftCount_beta,
-        rightCount_beta=wildcards.rightCount_beta,
-        minSamples_beta=wildcards.minSamples_beta,
-        minCov=wildcards.minCov
-    ).output[0]
+        minSamples_expr=wildcards.minSamples_expr
+    ).output[2]
 
     with open(chk_output) as f:
         return [x.strip() for x in f]
@@ -177,7 +118,7 @@ def get_txid_train_outputs(wildcards):
 
 def get_txid_tracks_outputs(wildcards):
     txids = txids_from_checkpoint(wildcards)
-    return expand(rules.generate_genome_tracks.output, TxID=txids, **wildcards)
+    return expand(rules.plot_genome_tracks.output, TxID=txids, **wildcards)
 
 def get_txid_heatmap_outputs(wildcards):
     txids = txids_from_checkpoint(wildcards)
@@ -187,17 +128,17 @@ rule run_all_models:
     input:
         get_txid_train_outputs
     output:
-        all_done_txid="results/checks/train/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}"
+        all_done_txid="results/checks/train/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
     shell:
         """
         echo {input} >> {output.all_done_txid}
         """
 
-rule get_tracks:
+rule plot_tracks:
     input:
         get_txid_tracks_outputs
     output:
-        all_done_txid="results/checks/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}_{importance}"
+        all_done_txid="results/checks/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{importance}"
     shell:
         """
         echo {input} >> {output.all_done_txid}
@@ -207,7 +148,7 @@ rule plot_heatmaps:
     input:
         get_txid_heatmap_outputs
     output:
-        all_done_txid="results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{comparison_type}_{minCount_expr}_{minSamples_expr}_{K}"
+        all_done_txid="results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
     shell:
         """
         echo {input} >> {output.all_done_txid}
@@ -215,7 +156,6 @@ rule plot_heatmaps:
 
 wildcard_constraints:
     tss_subset="[a-z]+",
-    comparison_type="[A-Z]+",
     distance = "[0-9]+",
     minSamples_beta = "[0-9]+",
     minCov = "[0-9]+",

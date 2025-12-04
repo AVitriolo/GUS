@@ -35,16 +35,15 @@ args = parser.parse_args()
 
 search_space = {
 	'learning_rate': scipy.stats.uniform(0.01, 0.29),
-	'max_depth': scipy.stats.randint(1, 15),
-	'min_child_weight': scipy.stats.randint(1, 51),
-	'gamma': scipy.stats.loguniform(0.1, 1.0),
-	'subsample': scipy.stats.uniform(0.6, 0.4),
-	'colsample_bytree': scipy.stats.uniform(0.5, 0.5),
-	'colsample_bylevel': scipy.stats.uniform(0.5, 0.5),
+	'max_depth': scipy.stats.randint(5, 10),
+	'min_child_weight': scipy.stats.randint(20, 40),
+	'gamma': scipy.stats.loguniform(0.25, 1.0),
+	'subsample': scipy.stats.uniform(0.75, 0.25),
+	'colsample_bytree': scipy.stats.uniform(0.7, 0.3),
+	'colsample_bylevel': scipy.stats.uniform(0.7, 0.3),
 	'reg_alpha': scipy.stats.loguniform(1e-3, 10),
 	'reg_lambda': scipy.stats.loguniform(0.1, 100),
-	'max_delta_step': scipy.stats.randint(0, 11),
-	'n_estimators': scipy.stats.randint(100, 501)
+	'n_estimators': scipy.stats.randint(200, 300)
 }
 
 xgb_dataset = pandas.read_csv(args.input_path, sep = "\t", header = 0)
@@ -55,7 +54,8 @@ random_inits_xgboost = [85] # 76, 4, 51, 8, 39, 72, 65, 83, 21, 85, 34, 20, 86, 
 
 for random_init in random_inits_xgboost:
 
-	regressor = xgboost.XGBRegressor(n_jobs = args.n_jobs_xgboost,
+	regressor = xgboost.XGBRegressor(
+		n_jobs = args.n_jobs_xgboost,
 			seed = random_init,
 			random_state = random_init,
 			tree_method = args.tree_method,
@@ -68,11 +68,13 @@ for random_init in random_inits_xgboost:
 
 	for random_split in random_splits:
 		
-		X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(X, y, 
+		X_train, X_test, y_train, y_test = sklearn.model_selection.train_test_split(
+									X, y, 
 									test_size = args.test_size, 
 									random_state = random_split)
 		
-		optimizer = sklearn.model_selection.RandomizedSearchCV(estimator = regressor, 
+		optimizer = sklearn.model_selection.RandomizedSearchCV(
+					estimator = regressor, 
 					param_distributions = search_space,
 					cv = args.cv, 
 					n_jobs = args.n_jobs_sklearn,
