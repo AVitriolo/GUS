@@ -9,12 +9,12 @@ correlation_matrix <- read.table(input_path, row.names = 1, header = T)
 
 mat <- as.matrix(correlation_matrix)
 
-idxs <- order(unlist(lapply(X = rownames(mat), 
-                            FUN = function(x){
-                              as.numeric(strsplit(x, split = "_")[[1]][[2]])
-                              })), 
-                              decreasing = F)
-mat <- mat[idxs, idxs]
+#idxs <- order(unlist(lapply(X = rownames(mat), 
+#                            FUN = function(x){
+#                              as.numeric(strsplit(x, split = "_")[[1]][[2]])
+#                              })), 
+#                              decreasing = F)
+#mat <- mat[idxs, idxs]
 
 col_fun <- circlize::colorRamp2(c(-1, 0, 1), c("blue", "white", "red"))
 

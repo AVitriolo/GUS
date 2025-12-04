@@ -5,7 +5,8 @@ source("workflow/scripts/helpers/process_cov_vals.R")
 #source("workflow/scripts/helpers/summarize_chunk_methylation.R")
 #source("workflow/scripts/helpers/chunk_regions.R")
 
-#library(future)
+library(future)
+library(future.apply)
 #library(MatrixGenerics)
 #library(GenomeInfoDb)
 
@@ -69,8 +70,9 @@ distance.minCpGs.filt <- top_K_CpGs %>%
 
 TxIDs <- unique(distance.minCpGs.filt$TxID)
 
-
-lapply(X = TxIDs, FUN = function(id){                                                                          # to parallelize
+options(future.globals.maxSize = 4 * 1024^3)
+plan(multicore, workers = 20)
+future_lapply(X = TxIDs, FUN = function(id){                                                                          # to parallelize
     
     counts_by_TxID <- as.data.frame(t(counts[id, grep(paste0("^",sample_type), colnames(counts))]))
 
@@ -155,7 +157,7 @@ lapply(X = TxIDs, FUN = function(id){                                           
     non_CpGs <- colnames(xgb_input)[grep(pattern="^CpG", colnames(xgb_input), invert = TRUE)]                  # greps tmrID and TxID, they both follow ^id pattern
   
     sd_per_value <- sapply(xgb_input[,!(colnames(xgb_input) %in% non_CpGs)], sd, na.rm = TRUE)
-    most_variable_CpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:(nrow(xgb_input)-length(non_CpGs))])
+    most_variable_CpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:min(length(sd_per_value), (nrow(xgb_input)-length(non_CpGs)))])
     xgb_input <- xgb_input[,c(most_variable_CpGs, non_CpGs)]
 
     xgb_input_wo_target <- xgb_input[,which(!(colnames(xgb_input) %in% id))]
@@ -188,6 +190,7 @@ lapply(X = TxIDs, FUN = function(id){                                           
     return(id)
 
 })
+plan(sequential)
 
 pdf(output_path_num_CpGs_plot)
 hist(distance.minCpGs.filt$numCpGs, breaks = 15)

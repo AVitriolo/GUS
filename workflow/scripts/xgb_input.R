@@ -2,6 +2,9 @@ source("workflow/scripts/helpers/load_h5_rse.R")
 source("workflow/scripts/helpers/process_beta_vals.R")
 source("workflow/scripts/helpers/process_cov_vals.R")
 
+library(future)
+library(future.apply)
+
 options(scipen=999)                                                                    #  unable scientific notation           
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                     #  read args
@@ -50,7 +53,9 @@ distance.minCpGs.filt <- top_K_CpGs %>%
 
 TxIDs <- unique(distance.minCpGs.filt$TxID) # save
 
-lapply(X = TxIDs, FUN = function(id){                                                 # to parallelize
+options(future.globals.maxSize = 4 * 1024^3)
+plan(multicore, workers = 20)
+future_lapply(X = TxIDs, FUN = function(id){                                                 # to parallelize
     
     counts_by_TxID <- as.data.frame(t(counts[id, grep(paste0("^",sample_type), colnames(counts))]))
 
@@ -69,9 +74,16 @@ lapply(X = TxIDs, FUN = function(id){                                           
     rownames(beta_by_TxID) <- GenomicRanges::mcols(CpGs_by_TxID)$CpGID
 
     CpGs_with_enough_coverage <- process_cov_vals(cov_by_TxID, minCov, minSamples_beta)              # get covered CpGs
-    rm(cov_by_TxID); gc()
+
     beta_by_TxID <- process_beta_vals(beta_by_TxID, leftCount_beta, rightCount_beta, minSamples_beta)     # filter by beta
-    beta_by_TxID <- beta_by_TxID[rownames(beta_by_TxID) %in% CpGs_with_enough_coverage,]                       # filter by coverage
+    beta_by_TxID <- beta_by_TxID[rownames(beta_by_TxID) %in% CpGs_with_enough_coverage,]
+
+    CpGs_by_TxID <- CpGs_by_TxID[which(GenomicRanges::mcols(CpGs_by_TxID)$CpGID %in% rownames(beta_by_TxID))]
+    
+    beta_by_TxID <- beta_by_TxID[match(GenomicRanges::mcols(CpGs_by_TxID)$CpGID,rownames(beta_by_TxID)),]
+    
+    coord_order <- GenomicRanges::mcols(GenomicRanges::sort(CpGs_by_TxID))$CpGID    
+    
     gc()
 
     beta_by_TxID <- as.data.frame(t(beta_by_TxID))
@@ -82,13 +94,19 @@ lapply(X = TxIDs, FUN = function(id){                                           
     rownames(xgb_input) <- xgb_input$sample; xgb_input$sample <- NULL
 
     sd_per_value <- sapply(xgb_input[,1:(ncol(xgb_input)-1)], sd, na.rm = TRUE)
-    most_variable_CpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:(nrow(xgb_input)-1)])
-
-    correlations_table <- cor(xgb_input[,which(colnames(xgb_input) %in% most_variable_CpGs)], method = "spearman")
+    most_variable_CpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:min(length(sd_per_value), (nrow(xgb_input)-1))])
     xgb_input <- xgb_input[,c(most_variable_CpGs, id)]
+
+    xgb_input_wo_target <- xgb_input[,which(!(colnames(xgb_input) %in% id))]
+    
+    coord_order <- coord_order[coord_order %in% colnames(xgb_input_wo_target)]
+    xgb_input_wo_target <- xgb_input_wo_target[, coord_order]
+
+    correlations_table <- cor(xgb_input_wo_target, method = "spearman")
     
     basename <- strsplit(x = output_path_ff_selected_TxIDs, split = "/")[[1]][3]
     basename <- gsub(x = basename, pattern = "_ff_selected_TxIDs", replacement = "")
+    
     output_path_corr <- paste0("data/corr/", basename, "_", id)
     output_path_xgb <- paste0("data/xgb/", basename, "_", id)
 
@@ -106,10 +124,10 @@ lapply(X = TxIDs, FUN = function(id){                                           
 		quote=F, 
 		sep="\t")
 
-
     return(id)
 
 })
+plan(sequential)
 
 pdf(output_path_num_CpGs_plot)
 hist(distance.minCpGs.filt$numCpGs, breaks = 15)

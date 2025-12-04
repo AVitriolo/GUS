@@ -53,7 +53,7 @@ selected_txIDs_location:
   - "resources/TxIDs/selected_TxIDs"
 
 use_TMRs:
-  - 1
+  - 0
 
 TMRs_dir:
   - "resources/CpG_data/TMRs/"
