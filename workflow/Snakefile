@@ -62,6 +62,17 @@ use_TMRs = config["use_TMRs"][0]
 rule all:
     input:
         expand(
+            "results/plots/filtering/nCpGs/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+                assembly_code=assembly_codes,
+                gencode_version=gencode_versions,
+                tss_subset=tss_subsets,
+                distance=distances,
+                min_CpG = min_CpGs,
+                sample_type=sample_types,
+                minCount_expr=minCount_exprs,
+                minSamples_expr=minSamples_exprs
+        ),
+        expand(
             "results/plots/ML/hyper/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
                 assembly_code=assembly_codes,
                 gencode_version=gencode_versions,

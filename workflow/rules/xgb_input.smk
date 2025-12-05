@@ -5,7 +5,7 @@ rule xgb_input:
     input:
         "results/plots/filtering/nCpGs/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
         dir_TMRs=config["TMRs_dir"][0],
-        dir_rse_TxID="data/rse/{TxID}",
+        dir_rse="data/rse",
         path_counts="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv"
     params:
         bool_TMRs = config["use_TMRs"][0]
@@ -26,7 +26,7 @@ rule xgb_input:
         fi  
 
         Rscript $script \
-        --input_dir_rse_TxID={input.dir_rse_TxID} \
+        --input_dir_rse={input.dir_rse} \
         --input_dir_TMRs={input.dir_TMRs} \
         --input_path_counts={input.path_counts} \
         --TxID={wildcards.TxID} \

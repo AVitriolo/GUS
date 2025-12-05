@@ -1,4 +1,4 @@
-checkpoint unpack_RSE:
+rule unpack_RSE:
     output:
         path_num_CpGs_plot="results/plots/filtering/nCpGs/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
         path_dist_filt_plot="results/plots/filtering/distance/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",

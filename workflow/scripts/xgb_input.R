@@ -6,7 +6,7 @@ options(scipen=999)                                                             
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                     #  read args
 
-input_dir_rse_TxID                        <- args$input_dir_rse_TxID                                                    #  resources/cpgea_wgbs_with_coverage_hg38/
+input_dir_rse                             <- args$input_dir_rse                                                  #  resources/cpgea_wgbs_with_coverage_hg38/
 input_dir_TMRs                            <- args$input_dir_TMRs
 input_path_counts                         <- args$input_path_counts
 TxID                                      <- args$TxID
@@ -19,6 +19,8 @@ output_path_xgb                           <- args$output_path_xgb
 output_path_corr                          <- args$output_path_corr
 
 `%>%` <- magrittr::`%>%`
+
+input_dir_rse_TxID <- grep(pattern = TxID, list.files(input_dir_rse))
 
 #### LOAD CpGs
 
