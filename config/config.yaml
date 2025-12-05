@@ -56,4 +56,4 @@ use_TMRs:
   - 0
 
 TMRs_dir:
-  - "resources/CpG_data/TMRs/"
+  - "resources/CpG_data/TMRs"

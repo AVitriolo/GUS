@@ -18,6 +18,8 @@ include: "rules/sort_CpGs.smk"
 
 include: "rules/get_K_closest_CpGs.smk"
 
+include: "rules/filter_selected_TxIDs_second_round.smk"
+include: "rules/unpack_RSE.smk"
 include: "rules/xgb_input.smk"
 
 include: "rules/train_models.smk"
@@ -91,26 +93,24 @@ rule all:
             )
 
 
-
 def txids_from_checkpoint(wildcards):
     """Return list of TxIDs from checkpoint output (cached)."""
-    chk_output = checkpoints.xgb_input.get(
+    chk_output = checkpoints.filter_selected_TxIDs_second_round.get(
         assembly_code=wildcards.assembly_code,
-        sample_type=wildcards.sample_type,
-        leftCount_beta = wildcards.leftCount_beta,
-        rightCount_beta = wildcards.rightCount_beta,
-        minSamples_beta = wildcards.minSamples_beta,
-        minCov = wildcards.minCov,
         gencode_version=wildcards.gencode_version,
         tss_subset=wildcards.tss_subset,
         distance=wildcards.distance,
         min_CpG = wildcards.min_CpG,
         minCount_expr=wildcards.minCount_expr,
         minSamples_expr=wildcards.minSamples_expr
-    ).output[2]
+    ).output[0]
 
     with open(chk_output) as f:
         return [x.strip() for x in f]
+
+def get_txid_xgb_input(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.xgb_input.output[0], TxID=txids, **wildcards)
 
 def get_txid_train_outputs(wildcards):
     txids = txids_from_checkpoint(wildcards)
@@ -123,6 +123,17 @@ def get_txid_tracks_outputs(wildcards):
 def get_txid_heatmap_outputs(wildcards):
     txids = txids_from_checkpoint(wildcards)
     return expand(rules.generate_feature_heatmap.output, TxID=txids, **wildcards)
+
+rule all_xgb_inputs:
+    input:
+        get_txid_xgb_input,
+        "results/plots/filtering/nCpGs/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf"
+    output:
+        all_done_txid="results/checks/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """
 
 rule run_all_models:
     input:
