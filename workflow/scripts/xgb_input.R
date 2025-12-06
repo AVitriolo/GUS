@@ -20,7 +20,7 @@ output_path_corr                          <- args$output_path_corr
 
 `%>%` <- magrittr::`%>%`
 
-input_dir_rse_TxID <- grep(pattern = TxID, list.files(input_dir_rse))
+input_dir_rse_TxID = paste0(input_dir_rse, "/", TxID)
 
 #### LOAD CpGs
 

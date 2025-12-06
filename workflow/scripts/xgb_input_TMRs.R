@@ -22,7 +22,7 @@ output_path_corr                          <- args$output_path_corr
 
 #### LOAD CpGs
 
-input_dir_rse_TxID <- grep(pattern = TxID, list.files(input_dir_rse))
+input_dir_rse_TxID = paste0(input_dir_rse, "/", TxID)
 
 h5_list <- load_h5_rse_mini(input_dir_rse_TxID)
 rse_by_TxID <- h5_list$rse
