@@ -10,3 +10,4 @@ dependencies:
   - r-ggplot2
   - r-dplyr
   - r-tidyr 
+  - bioconductor-complexheatmap

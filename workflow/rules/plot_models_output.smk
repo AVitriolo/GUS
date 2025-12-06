@@ -1,7 +1,9 @@
 rule plot_models_output:
     output:
-        hyper="results/plots/ML/hyper/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
-        perf="results/plots/ML/performance/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf"
+        hyper_density="results/plots/ML/hyper/density/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+        perf_density="results/plots/ML/performance/density/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+        hyper_heatmap="results/plots/ML/hyper/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+        perf_heatmap="results/plots/ML/performance/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf"
     input:
         hyper="results/hyper/aggr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.txt",
         perf="results/performance/aggr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.txt"
@@ -14,6 +16,8 @@ rule plot_models_output:
         Rscript workflow/scripts/plot_models_output.R \
         --input_path_hyper={input.hyper} \
         --input_path_perf={input.perf} \
-        --output_path_hyper={output.hyper} \
-        --output_path_perf={output.perf} 2> {log}
+        --output_path_hyper_heatmap={output.hyper_heatmap} \
+        --output_path_perf_heatmap={output.perf_heatmap} \
+        --output_path_hyper_density={output.hyper_density} \
+        --output_path_perf_density={output.perf_density} 2> {log}
         """

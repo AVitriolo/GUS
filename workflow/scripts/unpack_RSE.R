@@ -5,14 +5,10 @@ options(scipen=999)                                                             
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                                             #  read args
 
 input_dir                                 <- args$input_dir                                                    #  resources/cpgea_wgbs_with_coverage_hg38/
-input_path_K_closest                      <- args$input_path_K_closest
+input_path_filtered_CpGs                  <- args$input_path_filtered_CpGs
 input_path_selected_TxIDs                 <- args$input_path_selected_TxIDs
 sample_type                               <- args$sample_type
-distance                                  <- as.numeric(args$distance)
-min_CpG                                   <- as.numeric(args$min_CpG)
 output_dir                                <- args$output_dir
-output_path_num_CpGs_plot                 <- args$output_path_num_CpGs_plot
-output_path_dist_filt_plot                <- args$output_path_dist_filt_plot
 
 `%>%` <- magrittr::`%>%`
 
@@ -24,34 +20,18 @@ CpGs <- h5_list$CpGs
 beta <- h5_list$beta
 cov <- h5_list$cov
 
-#### LOAD Top K CpGs
+#### LOAD Top K filtered CpGs
 
-top_K_CpGs <- data.table::fread(input_path_K_closest)
-colnames(top_K_CpGs) <- c("chr", "start", "end", "CpGID", "TxID", "distance")
+CpGs_filtered <- data.table::fread(input_path_filtered_CpGs)
+colnames(CpGs_filtered) <- c("TxID", "CpGID")
 
 #### LOAD TxIDs
 
 TxIDs <- readLines(input_path_selected_TxIDs)
 
-#### Filter top K CpGs
-
-distance.minCpGs.filt <- top_K_CpGs %>% 
-                            dplyr::filter(.data$distance <= .env$distance) %>%                                 # filter by distance .env here is needed because otherwise I compare the column with itself
-                            dplyr::group_by(TxID) %>% 
-                            dplyr::mutate(numCpGs = dplyr::n()) %>% 
-                            dplyr::filter(numCpGs >= min_CpG)                                                  # filter by numCpGs
-
-pdf(output_path_num_CpGs_plot)
-hist(distance.minCpGs.filt$numCpGs, breaks = 15)
-dev.off()
-
-pdf(output_path_dist_filt_plot)
-hist(log10(as.data.frame(distance.minCpGs.filt)$distance), breaks = 45)
-dev.off()
-
 lapply(X = TxIDs, FUN = function(id){                                                                          # to parallelize
     
-    CpGs_by_TxID <- distance.minCpGs.filt %>% 
+    CpGs_by_TxID <- CpGs_filtered %>% 
                         dplyr::filter(.data$TxID == id) %>%                                                    # get CpGs per Tx
                         dplyr::pull(CpGID)
 

@@ -74,16 +74,16 @@ if(length(TMRs_by_TxID_with_at_least_one_CpG) > 0){
     TMR <- TMRs_by_TxID_with_at_least_one_CpG[idx]
     tmrID <- GenomicRanges::mcols(TMR)$tmrID
     iCpGs <- IRanges::subsetByOverlaps(CpGs_by_TxID, TMR, invert = FALSE)
-    beta_by_TxID_by_TMR <- beta_by_TxID[rownames(beta_by_TxID) %in% GenomicRanges::mcols(iCpGs)$CpGID, ]
+    beta_by_TxID_by_TMR <- beta_by_TxID[rownames(beta_by_TxID) %in% GenomicRanges::mcols(iCpGs)$CpGID, , drop = FALSE]
     avg_beta_by_TxID_by_TMR <- apply(X = beta_by_TxID_by_TMR, MARGIN = 2, FUN = mean)
 
     beta_by_TxID_iCpGs[[tmrID]] <- avg_beta_by_TxID_by_TMR
   }
-
-  beta_by_TxID_iCpGs <- do.call(rbind, beta_by_TxID_iCpGs)
   
+  beta_by_TxID_iCpGs <- do.call(rbind, beta_by_TxID_iCpGs)
+
   oCpGs <- IRanges::subsetByOverlaps(CpGs_by_TxID, TMRs_by_TxID_with_at_least_one_CpG, invert = TRUE)
-  beta_by_TxID_oCpGs <- beta_by_TxID[rownames(beta_by_TxID) %in% GenomicRanges::mcols(oCpGs)$CpGID, ]
+  beta_by_TxID_oCpGs <- as.matrix(beta_by_TxID[rownames(beta_by_TxID) %in% GenomicRanges::mcols(oCpGs)$CpGID, ])
 
   beta_by_TxID <- rbind(beta_by_TxID_oCpGs, beta_by_TxID_iCpGs)
 

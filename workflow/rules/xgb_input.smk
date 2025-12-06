@@ -3,7 +3,7 @@ rule xgb_input:
         outpath_xgb="data/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{TxID}",
         outpath_corr="data/corr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{TxID}"
     input:
-        "results/plots/filtering/nCpGs/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+        "results/checks/rse/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
         dir_TMRs=config["TMRs_dir"][0],
         dir_rse="data/rse",
         path_counts="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv"

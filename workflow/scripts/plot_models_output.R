@@ -1,4 +1,4 @@
-source("workflow/scripts/helpers/plot_models_output_helper.R")
+source("workflow/scripts/helpers/plot_models_output_helpers.R")
 
 options(scipen=999)                                                               # unable scientific notation           
 
@@ -7,12 +7,16 @@ args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)              
 input_path_hyper         <- args$input_path_hyper
 input_path_perf          <- args$input_path_perf
 
-output_path_hyper        <- args$output_path_hyper
-output_path_perf        <- args$output_path_perf
+output_path_hyper_density        <- args$output_path_hyper_density
+output_path_perf_density         <- args$output_path_perf_density
+output_path_hyper_heatmap        <- args$output_path_hyper_heatmap
+output_path_perf_heatmap         <- args$output_path_perf_heatmap
 
 hypers <- read.delim(input_path_hyper, header = T)
 perfs <- read.delim(input_path_perf, header = T)
 
-plot_models_output(hypers, output_path_hyper, "Hyperparameters")
-plot_models_output(perfs, output_path_perf, "Performances")
+plot_models_output_density(hypers, output_path_hyper_density, "Hyperparameters")
+plot_models_output_heatmap(hypers, output_path_hyper_heatmap, "Hyperparameters")
+plot_models_output_density(perfs, output_path_perf_density, "Performances")
+plot_models_output_heatmap(perfs, output_path_perf_heatmap, "Performances")
 
