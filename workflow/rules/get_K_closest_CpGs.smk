@@ -1,6 +1,6 @@
 rule get_K_closest_CpGs:
     output:
-        "resources/CpG_data/{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}.bed"
+        "resources/CpG_data/top_K/{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}.bed"
     input:
         CpGs="resources/CpG_data/coord/{assembly_code}.sorted.bed",
         filtered_TSSs="resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}.sorted.filtered.bed"

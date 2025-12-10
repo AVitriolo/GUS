@@ -1,0 +1,8 @@
+.snakemake/
+data/
+results/
+resources/
+logs/
+.RHistory
+.RData
+

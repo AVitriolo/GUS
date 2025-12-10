@@ -1,4 +1,5 @@
-options(scipen=999)                                                               # unable scientific notation           
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+options(scipen = 999) 
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                # read args
 

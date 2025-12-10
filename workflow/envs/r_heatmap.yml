@@ -8,5 +8,8 @@ dependencies:
   - r-essentials
   - r-r.utils
   - r-ggplot2
+  - r-circlize
+  - r-xml2
+  - libxml2
+  - libpng
   - bioconductor-complexheatmap
-  

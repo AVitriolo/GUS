@@ -1,6 +1,12 @@
-source("workflow/scripts/helpers/plot_models_output_helpers.R")
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+options(scipen = 999)
 
-options(scipen=999)                                                               # unable scientific notation           
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("ComplexHeatmap")
+
+source("workflow/scripts/helpers/plot_models_output_helpers.R")
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                # read args
 

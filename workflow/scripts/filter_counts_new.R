@@ -1,5 +1,11 @@
 source("workflow/scripts/helpers/process_expr_vals.R")
 
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("edgeR")
+
 options(scipen=999)                                                               # unable scientific notation           
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                # read args

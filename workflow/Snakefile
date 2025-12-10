@@ -17,13 +17,14 @@ include: "rules/filter_CpGs_by_mappability.smk"
 include: "rules/sort_CpGs.smk"
 
 include: "rules/get_K_closest_CpGs.smk"
+include: "rules/unpack_topK.smk"
 
 include: "rules/filter_selected_TxIDs_second_round.smk"
 include: "rules/unpack_RSE.smk"
 include: "rules/xgb_input.smk"
 
 include: "rules/train_models.smk"
-include: "rules/generate_feature_heatmap.smk"
+#include: "rules/generate_feature_heatmap.smk"
 
 include: "rules/aggregate_models_output.smk"
 include: "rules/extract_CpGs_from_output.smk"
@@ -34,7 +35,7 @@ include: "rules/get_chrom_sizes.smk"
 include: "rules/clean_chrom_sizes.smk"
 include: "rules/slop_TSSs.smk"
 include: "rules/generate_ini_file.smk"
-#include: "rules/plot_genome_tracks.smk"
+include: "rules/plot_genome_tracks.smk"
 include: "rules/prepare_TSSs_to_plot_tracks.smk"
 
 include: "rules/garbage_collector.smk"
@@ -62,18 +63,22 @@ use_TMRs = config["use_TMRs"][0]
 rule all:
     input:
         expand(
-            "results/checks/rse/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
+            "results/checks/rse/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
                 assembly_code=assembly_codes,
                 gencode_version=gencode_versions,
                 tss_subset=tss_subsets,
                 distance=distances,
                 min_CpG = min_CpGs,
                 sample_type=sample_types,
+                leftCount_beta = leftCount_betas,
+                rightCount_beta = rightCount_betas,
+                minSamples_beta = minSamples_betas,
+                minCov = minCovs,
                 minCount_expr=minCount_exprs,
                 minSamples_expr=minSamples_exprs
         ),
         expand(
-            "results/plots/ML/hyper/density/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf",
+            "data/checks/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
                 assembly_code=assembly_codes,
                 gencode_version=gencode_versions,
                 tss_subset=tss_subsets,
@@ -88,7 +93,7 @@ rule all:
                 minSamples_expr=minSamples_exprs
             ),
         expand(
-            "results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
+            "results/hyper/aggr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.txt",
                 assembly_code=assembly_codes,
                 gencode_version=gencode_versions,
                 tss_subset=tss_subsets,
@@ -100,9 +105,8 @@ rule all:
                 minSamples_beta = minSamples_betas,
                 minCov = minCovs,
                 minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs        
+                minSamples_expr=minSamples_exprs
             )
-
 
 def txids_from_checkpoint(wildcards):
     """Return list of TxIDs from checkpoint output (cached)."""
@@ -118,6 +122,14 @@ def txids_from_checkpoint(wildcards):
 
     with open(chk_output) as f:
         return [x.strip() for x in f]
+
+def get_txid_unpack_topK(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.unpack_topK.output[0], TxID=txids, **wildcards)
+
+def get_txid_unpack_rse(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.unpack_RSE.output[0], TxID=txids, **wildcards)
 
 def get_txid_xgb_input(wildcards):
     txids = txids_from_checkpoint(wildcards)
@@ -135,12 +147,32 @@ def get_txid_heatmap_outputs(wildcards):
     txids = txids_from_checkpoint(wildcards)
     return expand(rules.generate_feature_heatmap.output, TxID=txids, **wildcards)
 
+
+rule all_unpack_topK:
+    input:
+        get_txid_unpack_topK,
+    output:
+        all_done_txid="resources/CpG_data/top_K/checks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """
+
+rule all_unpack_RSE:
+    input:
+        get_txid_unpack_rse,
+    output:
+        all_done_txid="results/checks/rse/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """
+
 rule all_xgb_inputs:
     input:
         get_txid_xgb_input,
-        "results/plots/filtering/nCpGs/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}.pdf"
     output:
-        all_done_txid="results/checks/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
+        all_done_txid="data/checks/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}"
     shell:
         """
         echo {input} >> {output.all_done_txid}
@@ -192,60 +224,3 @@ wildcard_constraints:
     K="[0-9]+",
     importance="[a-z]+"
 
-onsuccess:
-
-    dirs_to_clean = ["get_CpGs_by_TxID",
-                    "get_transcriptome",
-                    "subset_beta_matrix",
-                    "generate_datasets",
-                    "generate_genome_tracks",
-                    "generate_feature_heatmap",
-                    "extract_CpGs_from_output",
-                    "train_models"]
-
-    [
-    os.system(
-        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done;"
-        f"for file in logs/{dir}/*; do if [ $(basename $file) != {dir}_aggregated.log ]; then rm $file; fi  done;"
-    )
-    for dir in dirs_to_clean
-]
-
-
-    attachments = [f"logs/{path}/{elem}" for path in os.listdir("logs/") for elem in os.listdir(f"logs/{path}/")]
-    send_email(subject = "Snakemake workflow - SUCCESS", 
-            body = "The workflow completed successfully.",
-            attachments=attachments,
-            recipients=recipients, 
-            sender=sender,
-            app_password=app_password
-    )
-
-onerror:
-    
-    dirs_to_clean = ["get_CpGs_by_TxID",
-                    "get_transcriptome",
-                    "subset_beta_matrix",
-                    "generate_datasets",
-                    "generate_genome_tracks",
-                    "generate_feature_heatmap",
-                    "extract_CpGs_from_output",
-                    "train_models"]
-
-    [
-    os.system(
-        f"for file in logs/{dir}/*; do cat $file >> logs/{dir}/{dir}_aggregated.log; done;"
-        f"for file in logs/{dir}/*; do if [ $(basename $file) != {dir}_aggregated.log ]; then rm $file; fi  done;"
-    )
-    for dir in dirs_to_clean
-]
-
-
-    attachments = [f"logs/{path}/{elem}" for path in os.listdir("logs/") for elem in os.listdir(f"logs/{path}/")]
-    send_email(subject = "Snakemake workflow - FAILURE", 
-            body = "Check the attachments for the failing logs.",
-            attachments=attachments, 
-            recipients=recipients, 
-            sender=sender,
-            app_password=app_password
-    )

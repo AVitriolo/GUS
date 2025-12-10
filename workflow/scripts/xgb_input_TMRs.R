@@ -6,11 +6,11 @@ options(scipen=999)                                                             
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)                                             #  read args
 
-input_dir_rse                             <- args$input_dir_rse                                                  #  resources/cpgea_wgbs_with_coverage_hg38/
+input_path_rse                            <- args$input_path_rse                                                  #  resources/cpgea_wgbs_with_coverage_hg38/
 input_dir_TMRs                            <- args$input_dir_TMRs
 input_path_counts                         <- args$input_path_counts
-TxID                                      <- args$TxID
 sample_type                               <- args$sample_type
+TxID                                      <- args$TxID
 minCov                                    <- as.numeric(args$minCov)
 leftCount_beta                            <- as.numeric(args$leftCount_beta)
 rightCount_beta                           <- as.numeric(args$rightCount_beta)
@@ -22,9 +22,7 @@ output_path_corr                          <- args$output_path_corr
 
 #### LOAD CpGs
 
-input_dir_rse_TxID = paste0(input_dir_rse, "/", TxID)
-
-h5_list <- load_h5_rse_mini(input_dir_rse_TxID)
+h5_list <- load_h5_rse_mini(input_path_rse)
 rse_by_TxID <- h5_list$rse
 CpGs_by_TxID <- h5_list$CpGs
 beta_by_TxID <- h5_list$beta

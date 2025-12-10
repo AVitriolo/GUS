@@ -12,4 +12,4 @@ dependencies:
   - bioconductor-genomicranges
   - bioconductor-hdf5array
   - bioconductor-summarizedexperiment
-  
+  - bioconductor-biocparallel 
