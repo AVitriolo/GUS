@@ -1,4 +1,5 @@
 .snakemake/
+*.out
 data/
 results/
 resources/
