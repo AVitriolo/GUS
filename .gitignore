@@ -1,9 +1,8 @@
 .snakemake/
-./snakemake_2962980.out
 data/
 results/
 resources/
 logs/
 .RHistory
 .RData
-
+snakemake_2962980.out
