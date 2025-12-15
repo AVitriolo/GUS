@@ -9,7 +9,7 @@ rule aggregate_corr_meth_expr:
     shell:
         """
         for f in {input.dir}/*; do
-            if [ -s "$f" ]; then
+            if [ -s "$f" ] && [ -f "$f" ]; then
                 enst=$(basename "$f" | awk -F'_' '{{print $NF}}')
                 awk -v id="$enst" 'FNR>1 && NF {{print $0 "\t" id}}' "$f" >> {output}
 

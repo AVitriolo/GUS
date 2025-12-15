@@ -23,6 +23,8 @@ include: "rules/filter_selected_TxIDs_second_round.smk"
 include: "rules/unpack_RSE.smk"
 include: "rules/xgb_input.smk"
 include: "rules/corr_meth_expr.smk"
+include: "rules/aggregate_corr_meth_expr.smk"
+
 include: "rules/train_models.smk"
 #include: "rules/generate_feature_heatmap.smk"
 
@@ -63,7 +65,22 @@ use_TMRs = config["use_TMRs"][0]
 rule all:
     input:
         expand(
-            "results/checks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
+            "results/corr_meth_expr/aggr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
+                assembly_code=assembly_codes,
+                gencode_version=gencode_versions,
+                tss_subset=tss_subsets,
+                distance=distances,
+                min_CpG = min_CpGs,
+                sample_type=sample_types,
+                leftCount_beta = leftCount_betas,
+                rightCount_beta = rightCount_betas,
+                minSamples_beta = minSamples_betas,
+                minCov = minCovs,
+                minCount_expr=minCount_exprs,
+                minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "results/checks/corr_meth_expr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}",
                 assembly_code=assembly_codes,
                 gencode_version=gencode_versions,
                 tss_subset=tss_subsets,
@@ -137,6 +154,7 @@ rule all:
                 minCount_expr=minCount_exprs,
                 minSamples_expr=minSamples_exprs
             )
+            
 
 def txids_from_checkpoint(wildcards):
     """Return list of TxIDs from checkpoint output (cached)."""
@@ -168,6 +186,10 @@ def get_txid_xgb_input(wildcards):
 def get_txid_corr_meth(wildcards):
     txids = txids_from_checkpoint(wildcards)
     return expand(rules.corr_meth_expr.output[0], TxID=txids, **wildcards)
+
+def get_txid_aggr_corr(wildcards):
+    txids = txids_from_checkpoint(wildcards)
+    return expand(rules.aggregate_corr_meth_expr.output[0], TxID=txids, **wildcards)
 
 def get_txid_train_outputs(wildcards):
     txids = txids_from_checkpoint(wildcards)
@@ -220,6 +242,16 @@ rule all_corr_meth:
         """
         echo {input} >> {output.all_done_txid}
         """
+rule all_aggr_corr:
+    input:
+         get_txid_aggr_corr,
+    output:
+        all_done_txid="results/corr_meth_expr/aggr/aggregated_corr_meth_expr.txt"
+    shell:
+        """
+        echo {input} >> {output.all_done_txid}
+        """
+
 
 rule run_all_models:
     input:
