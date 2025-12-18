@@ -52,8 +52,28 @@ importances:
 selected_txIDs_location:
   - "resources/TxIDs/selected_TxIDs"
 
+TMRs_dir:
+  - "resources/TMRs"
+
 use_TMRs:
   - 0
 
-TMRs_dir:
-  - "resources/TMRs"
+n_jobs_xgboost:
+  - 5
+
+n_jobs_sklearn:
+  - 1
+
+n_iter_rsearch:
+  - 27
+
+verbosity:
+  - 0
+
+num_features_threshold:
+  - 23
+
+hypertune_random_state_rsearch:
+  - 21
+
+

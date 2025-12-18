@@ -22,7 +22,7 @@ rule xgb_input:
             echo "Not Integrating TMRs"
             script="workflow/scripts/xgb_input.R"
             echo "Running $script"
-        fi  
+        fi
 
         Rscript $script \
         --input_path_rse={input.path_rse} \
@@ -37,4 +37,5 @@ rule xgb_input:
         --output_path_xgb={output.outpath_xgb} \
         --output_path_corr={output.outpath_corr} 2> {log}
         """
+
 

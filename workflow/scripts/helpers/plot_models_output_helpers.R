@@ -52,7 +52,7 @@ col_fun <- circlize::colorRamp2(
 
 ht <- ComplexHeatmap::Heatmap(
   mat,
-  name = "parameters",
+  name = what,
   cluster_rows = TRUE,
   cluster_columns = FALSE,
   col = col_fun,

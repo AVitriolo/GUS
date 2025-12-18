@@ -21,4 +21,3 @@ checkpoint filter_selected_TxIDs_second_round:
         --distance={wildcards.distance} \
         --min_CpG={wildcards.min_CpG} 2> {log}
         """
-    
