@@ -1,17 +1,18 @@
 rule xgb_input:
     output:
-        outpath_xgb="data/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{TxID}",
-        outpath_corr="data/corr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{TxID}"
+        outpath_xgb="data/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{TxID}",
+        outpath_corr="data/corr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{TxID}"
     input:
-        path_rse="data/rse/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{TxID}",
+        path_rse="data/rse/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{TxID}",
         dir_TMRs=config["TMRs_dir"][0],
-        path_counts="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv"
+        path_counts="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv",
+        path_TxIDs_to_exclude="resources/TxIDs/TxIDs_to_exclude"
     params:
         bool_TMRs = config["use_TMRs"][0]
     conda:
         "../envs/r_xgb_input.yml"
     log:
-        "logs/xgb_input/xgb_input_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{TxID}.log"
+        "logs/xgb_input/xgb_input_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{TxID}.log"
     shell:
         """
         if [ {params.bool_TMRs} -eq 1 ]; then
@@ -28,6 +29,7 @@ rule xgb_input:
         --input_path_rse={input.path_rse} \
         --input_dir_TMRs={input.dir_TMRs} \
         --input_path_counts={input.path_counts} \
+        --input_path_TxIDs_to_exclude={input.path_TxIDs_to_exclude} \
         --sample_type={wildcards.sample_type} \
         --TxID={wildcards.TxID} \
         --minCov={wildcards.minCov} \

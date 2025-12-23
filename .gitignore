@@ -5,4 +5,5 @@ resources/
 logs/
 .RHistory
 .RData
-snakemake_2962980.out
+snakemake_*.out
+github_tokens

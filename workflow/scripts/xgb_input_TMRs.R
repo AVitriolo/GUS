@@ -9,6 +9,7 @@ args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)              
 input_path_rse                            <- args$input_path_rse                                                  #  resources/cpgea_wgbs_with_coverage_hg38/
 input_dir_TMRs                            <- args$input_dir_TMRs
 input_path_counts                         <- args$input_path_counts
+input_path_TxIDs_to_exclude               <- args$input_path_TxIDs_to_exclude
 sample_type                               <- args$sample_type
 TxID                                      <- args$TxID
 minCov                                    <- as.numeric(args$minCov)
@@ -52,6 +53,13 @@ CpGs_with_enough_coverage <- process_cov_vals(cov_by_TxID, minCov, minSamples_be
 beta_by_TxID <- process_beta_vals(beta_by_TxID, leftCount_beta, rightCount_beta, minSamples_beta)          # filter by beta
 beta_by_TxID <- beta_by_TxID[rownames(beta_by_TxID) %in% CpGs_with_enough_coverage,]                       # filter by coverage
     
+if(nrow(beta_by_TxID) == 0){
+    writeLines(text = "", con = output_path_xgb)
+    writeLines(text = "", con = output_path_corr)
+    write(x = TxID, sep = "\n", file = input_path_TxIDs_to_exclude, append = TRUE)
+    quit(save = "no")
+}
+  
 CpGs_by_TxID <- CpGs_by_TxID[which(GenomicRanges::mcols(CpGs_by_TxID)$CpGID %in% rownames(beta_by_TxID))]
     
 beta_by_TxID <- beta_by_TxID[match(GenomicRanges::mcols(CpGs_by_TxID)$CpGID,rownames(beta_by_TxID)),]

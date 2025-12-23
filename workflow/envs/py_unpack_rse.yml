@@ -1,0 +1,19 @@
+name: py_unpack_rse
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - pandas
+  - numpy
+  - pip
+  - rpy2
+  - bioconductor-genomicranges
+  - bioconductor-hdf5array
+  - bioconductor-summarizedexperiment
+  - pip:
+    - summarizedexperiment 
+    - biocframe
+    - h5py
+    - anndata
+    - dask

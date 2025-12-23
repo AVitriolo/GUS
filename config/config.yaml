@@ -17,22 +17,25 @@ tss_subsets:
  - pc
 
 sample_types:
- - T
+ - N
  
 distances:
- - 250000
+ - 500000
 
 min_CpGs:
  - 50
 
+K_closests:
+ - 5000
+
 leftCount_betas:
-  - 0.4
+  - 0.5
 
 rightCount_betas:
-  - 0.6
+  - 0.5
 
 minCount_exprs:
-  - 20
+  - 25
 
 minSamples_betas:
   - 90
@@ -42,9 +45,6 @@ minCovs:
 
 minSamples_exprs:
   - 10
-  
-Ks:
-  - 100
 
 importances:
   - "shap"
@@ -56,10 +56,10 @@ TMRs_dir:
   - "resources/TMRs"
 
 use_TMRs:
-  - 0
+  - 1
 
 n_jobs_xgboost:
-  - 5
+  - 10
 
 n_jobs_sklearn:
   - 1
@@ -76,4 +76,8 @@ num_features_threshold:
 hypertune_random_state_rsearch:
   - 21
 
+test_sizes:
+  - 0.3
 
+CVs:
+  - 5

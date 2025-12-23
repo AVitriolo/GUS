@@ -58,7 +58,8 @@ ht <- ComplexHeatmap::Heatmap(
   col = col_fun,
   row_title = "TxID",
   column_title = what,
-  column_title_gp = grid::gpar(fontsize = 14, fontface = "bold")
+  column_title_gp = grid::gpar(fontsize = 14, fontface = "bold"),
+  show_row_names = FALSE
 )
 
 pdf(output_path, width = 12, height = 8)

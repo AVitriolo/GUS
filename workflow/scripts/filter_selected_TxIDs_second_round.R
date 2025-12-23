@@ -25,6 +25,7 @@ distance.minCpGs.filt <- top_K_CpGs %>%
                             dplyr::mutate(numCpGs = dplyr::n()) %>% 
                             dplyr::filter(numCpGs >= min_CpG)                                                  # filter by numCpGs
 
+
 CpGs_filtered <- distance.minCpGs.filt[,c("TxID", "CpGID")]
 
 write.table(x = CpGs_filtered, 

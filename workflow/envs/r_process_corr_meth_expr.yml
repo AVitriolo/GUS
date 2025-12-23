@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-essentials
+  - r-r.utils
+  - r-data.table
+  - r-ggplot2
+  - r-dynamicTreeCut
