@@ -171,6 +171,7 @@ for random_init in random_inits_xgboost:
 		importance_shap = {features_for_shap[i]:mean_abs_shap[i] for i in range(0, len(features_for_shap))}
 
 		feature_importance_df = pandas.DataFrame({"weight": importance_weight, "gain": importance_gain, "cover": importance_cover, "shap": importance_shap})
+		feature_importance_df = feature_importance_df.fillna(0)
 		feature_importance_df.to_csv(args.output_path_feat_imp, sep = "\t", header=True, doublequote=False)
 
 		predictions = model.predict(X_train_reduced)

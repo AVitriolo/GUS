@@ -11,5 +11,6 @@ source ~/miniforge3/etc/profile.d/conda.sh
 conda activate snakemake-env
 
 # Run locally using the allocated resources
+snakemake --configfile config/config.yaml --snakefile workflow/Snakefile --unlock
 snakemake --configfile config/config.yaml --snakefile workflow/Snakefile --use-conda --cores 20 
 

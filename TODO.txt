@@ -1,19 +1,12 @@
-- singularity
-
-- add double Snakefile
-
-- anticipate filtering instead of third checkpoint
-
 - lista di mutazioni frequenti, secondarie, cancerogene, bystander
 	- trova su cluster BAM files
 	- crea BED file con mutations e usa deeptools e conti quante reads in quella regione mutata
 	- prima di deeptools --> grep in cui separo BAM per wt e mutated e calcolo ratio 
 
-- cerca in giro se esiste qualcosa di simile
-
-- fix importance if {}
-	- empty dictionaries where no features selected
-		- temp solution: shap always generate values
+- Improve train_models.py
+	- In particular, improve feature selection + hyperparam tuning
+	- BUT we need nested CV probably
+	- 5 fold is better than 10 in this case because we have too few samples
 
 - create decorrelation function
    - 10:1 observation feature cutoff for sampling
@@ -23,8 +16,6 @@
 - automatized sample selection in PCA space (per giuoco)
 - sample exclusion list sia per metiloma, che per trascrittoma (per obbligo)
 
-- Create R.utils specific conda env
-
 - Automatic elbow finder
 	top k more variable vs elbow
 
@@ -33,20 +24,15 @@
 	CpG tournaments
 
 - create decorrelation function
-	decorrelation vs TMRs
-		-> measure correlation of TMRs first
-		-> consider a mixed set of inputs TMRs + outer CpGs
 	
-- Fix base_learner xgboost and shap compatibility issue
-	-> fixed by downgrading vs new approach?	
-
-- Optimize beta filtering
-	-> done?
-	-> work directly on h5 by transcript (earlier parallelization)
-
 - combined importance score
-	-> TBD
 
 - imputation for missing CpGs
-	- group CpGs (indie of associated genes) by distance from tss, correlation, TF-annotation?
+	- group CpGs (inside of associated genes) by distance from tss, correlation, TF-annotation?
 		-> infer their importance
+
+- singularity
+
+- add double Snakefile
+
+- anticipate filtering instead of third checkpoint

@@ -1,3 +1,5 @@
+source("workflow/scripts/helpers/is_empty.R")
+
 options(scipen=999)
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)
@@ -7,6 +9,16 @@ input_path_sel_feat                       <- args$input_path_sel_feat
 input_path_coord                          <- args$input_path_coord
 output_path_cor_neg                       <- args$output_path_cor_neg
 output_path_cor_pos                       <- args$output_path_cor_pos
+
+if (is_empty(input_path_corr) ||
+    is_empty(input_path_sel_feat)) {
+
+  write.table(data.frame(), file = output_path_cor_neg, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+  write.table(data.frame(), file = output_path_cor_pos, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+
+  q(status = 0) 
+}
 
 corr = read.table(input_path_corr, header=TRUE, sep="\t")
 sel_feats = read.table(input_path_sel_feat, header=FALSE, sep="\t")
