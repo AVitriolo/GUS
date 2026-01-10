@@ -31,8 +31,6 @@
 	- group CpGs (inside of associated genes) by distance from tss, correlation, TF-annotation?
 		-> infer their importance
 
-- singularity
+- add double Snakefile: safe because filtering works the same
 
-- add double Snakefile
-
-- anticipate filtering instead of third checkpoint
+- docker

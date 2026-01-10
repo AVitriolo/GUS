@@ -150,6 +150,12 @@ include: "rules/plot_genome_tracks.smk"
 
 include: "rules/garbage_collector.smk"
 
+include: "rules/get_CpG_Tx_pairs.smk"
+include: "rules/get_composite_coordinates.smk"
+include: "rules/get_sel_feats_coordinates.smk"
+include: "rules/get_GRN.smk"
+include: "rules/sort_GRN.smk"
+
 sender = config["sender"][0]
 app_password = config["app_password"][0]
 recipients = config["recipients"]
@@ -174,6 +180,24 @@ CVs = config["CVs"]
 
 rule all:
     input:
+        expand(
+            "results/GRN/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}.sorted.bed",
+                assembly_code=assembly_codes,
+                gencode_version=gencode_versions,
+                tss_subset=tss_subsets,
+                distance=distances,
+                min_CpG = min_CpGs,
+                sample_type=sample_types,
+                leftCount_beta = leftCount_betas,
+                rightCount_beta = rightCount_betas,
+                minSamples_beta = minSamples_betas,
+                minCov = minCovs,
+                minCount_expr=minCount_exprs,
+                minSamples_expr=minSamples_exprs,
+                K_closest=K_closests,
+                test_size=test_sizes,
+                CV=CVs
+        ),
         expand(
             "results/corr_meth_expr/bed/clustered/aggr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}", 
                 assembly_code=assembly_codes,
@@ -387,17 +411,19 @@ rule cluster_all_corr:
         """
 
 wildcard_constraints:
+    assembly_code="hg\\d{2}",
+    gencode_version="[0-9]+",
     tss_subset="[a-z]+",
     distance = "[0-9]+",
-    minSamples_beta = "[0-9]+",
-    minCov = "[0-9]+",
-    gencode_version="[0-9]+",
-    minCount_expr="[0-9]+",
-    assembly_code="hg\\d{2}",
     sample_type="[A-Z]",
     minCpG="[0-9]+",
     leftCount_beta="\\d+(\\.\\d+)?",
     rightCount_beta="\\d+(\\.\\d+)?",
+    minSamples_beta = "[0-9]+",
+    minCov = "[0-9]+",
+    minCount_expr="[0-9]+",
     minSamples_expr="[0-9]+",
     importance="[a-z]+",
-    K_closest="[0-9]+"
+    K_closest="[0-9]+",
+    CV="[0-9]+",
+    test_size="\\d+(\\.\\d+)?"
