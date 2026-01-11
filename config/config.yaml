@@ -22,6 +22,9 @@ sample_types:
 distances:
  - 500000
 
+slop_distances:
+ - 100000
+
 min_CpGs:
  - 50
 
