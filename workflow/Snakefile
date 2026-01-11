@@ -143,6 +143,8 @@ include: "rules/plot_models_output.smk"
 include: "rules/get_chrom_sizes.smk"
 include: "rules/clean_chrom_sizes.smk"
 
+include: "rules/get_TxID_specific_gtf.smk"
+
 include: "rules/extract_CpGs_from_output.smk"
 include: "rules/generate_genome_tracks.smk"
 
@@ -184,6 +186,22 @@ CVs = config["CVs"]
 
 rule all:
     input:
+        expand(
+            "resources/checks/generate/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}",
+                assembly_code=assembly_codes,
+                gencode_version=gencode_versions,
+                tss_subset=tss_subsets,
+                distance=distances,
+                min_CpG = min_CpGs,
+                sample_type=sample_types,
+                leftCount_beta = leftCount_betas,
+                rightCount_beta = rightCount_betas,
+                minSamples_beta = minSamples_betas,
+                minCov = minCovs,
+                minCount_expr=minCount_exprs,
+                minSamples_expr=minSamples_exprs,
+                K_closest=K_closests
+        ),
         expand(
             "results/GRN/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}.sorted.bed",
                 assembly_code=assembly_codes,
@@ -338,7 +356,7 @@ rule generate_all_gtfs:
     input:
         get_txid_gtf
     output:
-        all_done_txid="resources/checks/generate/v{gencode_version}"
+        all_done_txid="resources/checks/generate/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
     shell:
         """
         echo {input} >> {output.all_done_txid}
