@@ -12,5 +12,5 @@ rule corr_meth_expr:
         Rscript workflow/scripts/corr_meth_expr.R \
         --input_path={input} \
         --TxID={wildcards.TxID} \
-        --output_path={output} 
+        --output_path={output} 2> {log}
         """

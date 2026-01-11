@@ -8,10 +8,10 @@ output_path_GRN                       <- args$output_path_GRN
 
 # load files with couples and coordinates
 # merge by id
-cpgGenes <- read.table(input_path_composite_selected,head=F,sep="\t")
+cpgGenes <- read.table(input_path_pairs,head=F,sep="\t")
 names(cpgGenes) <- c("id","gene")
 
-cpgCoord <- read.table(input_path_pairs,head=F,sep="\t")
+cpgCoord <- read.table(input_path_composite_selected,head=F,sep="\t")
 names(cpgCoord) <- c("chr","start","end","id")
 
 CpGGenes <- merge(cpgGenes,cpgCoord, by="id")

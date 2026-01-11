@@ -2,8 +2,8 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--input_dir_selected_CpGs', dest='input_dir_selected_CpGs', type=int, help='Add input_dir_selected_CpGs')
-parser.add_argument('--output_path_pairs', dest='output_path_pairs', type=int, help='Add output_path_pairs')
+parser.add_argument('--input_dir_selected_CpGs', dest='input_dir_selected_CpGs', type=str, help='Add input_dir_selected_CpGs')
+parser.add_argument('--output_path_pairs', dest='output_path_pairs', type=str, help='Add output_path_pairs')
 
 args = parser.parse_args()
 

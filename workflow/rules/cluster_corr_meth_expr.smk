@@ -20,5 +20,5 @@ rule cluster_corr_meth_expr:
         --output_path_corr_neg={output.corr_neg} \
         --output_path_plot_neg={output.plot_neg} \
         --output_path_plot_pos={output.plot_pos} \
-        --TxID={wildcards.TxID}
+        --TxID={wildcards.TxID} 2> {log}
         """
