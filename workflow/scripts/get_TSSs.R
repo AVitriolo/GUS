@@ -14,7 +14,7 @@ names(gencode_gr) <- gencode_gr$ID
 
 pc_transcripts_gr <- gencode_gr[gencode_gr$type == "transcript" & gencode_gr$transcript_type == "protein_coding" & GenomicRanges::seqnames(gencode_gr) != "chrM"]
 
-output_dataset <- cbind(as.data.frame(pc_transcripts_gr@seqnames),              # pc_transcripts_tss_gr
+output_dataset <- cbind(as.data.frame(pc_transcripts_gr@seqnames),                # pc_transcripts_tss_gr
                         as.data.frame(pc_transcripts_gr@ranges),
                         as.data.frame(pc_transcripts_gr@strand))[,c(1,2,3,5,6)]   # [,c(1:3,5)] here we need to enforce end = start  + 1
 

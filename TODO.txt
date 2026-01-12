@@ -34,3 +34,6 @@
 - add double Snakefile: safe because filtering works the same
 
 - docker
+
+- add download assembly with genomepy
+- add gimme motif rule

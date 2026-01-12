@@ -159,8 +159,10 @@ include: "rules/garbage_collector.smk"
 include: "rules/get_CpG_Tx_pairs.smk"
 include: "rules/get_composite_coordinates.smk"
 include: "rules/get_sel_feats_coordinates.smk"
+include: "rules/get_pairs_with_coords.smk"
+include: "rules/sort_pairs_with_coords.smk"
+include: "rules/slop_pairs_with_coords.smk"
 include: "rules/get_GRN.smk"
-include: "rules/sort_GRN.smk"
 
 sender = config["sender"][0]
 app_password = config["app_password"][0]
@@ -203,7 +205,7 @@ rule all:
                 K_closest=K_closests
         ),
         expand(
-            "results/GRN/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}.sorted.bed",
+            "results/GRN/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}",
                 assembly_code=assembly_codes,
                 gencode_version=gencode_versions,
                 tss_subset=tss_subsets,

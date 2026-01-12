@@ -1,0 +1,51 @@
+# in bash
+# output basic GRN (CpG w coords -> TxID), for GRCh38.p14 chromosome names in coord do not have the "chr" prefix
+
+slopBed -i CpGGenesCoord.toGimme.bed -b 25 -g hg38.chrom.clean.sizes > CpGGenesCoord.toGimme.25bp.bed
+gimme scan CpGGenesCoord.toGimme.25bp.bed -g GRCh38.p14 > CpG.Scan.Table.25b.bed
+
+# in R
+# load CpG Motifs Scores
+asd <- read.table("MotifCpGScore.tab",head=F)
+# load Motif - TF conversion
+foo <- read.table("motif2factors.txt",head=T,sep="\t")
+# rename asd
+names(asd) <- c("Motif","CpG","FPR")
+# merge by Motif
+asd2 <- merge(asd,foo,by="Motif")
+# translate TF motif names to upper case (we checked first that names match)
+asd2$TF <- toupper(asd2$Factor)
+# load gene - cpg association
+bar <- read.table("CpGGenesCoord.bed",head=F)
+bar <- bar[,c(4:5)]
+names(bar) <- c("CpG","Gene")
+asd3 <- merge(asd2,bar,by="CpG")
+write.table(asd3,quote=F,row.names=F,file="20260112_CpGMotifTFGene.tab")
+library(GenomicRanges)
+library("rtracklayer")
+rtracklayer::import.gff3("~/../Prostate_GAS/resources/reference_data/gencode/gencode.v38.annotation.gff3.gz")
+gff3 <- rtracklayer::import.gff3("~/../Prostate_GAS/resources/reference_data/gencode/gencode.v38.annotation.gff3.gz")
+gff3 <- gff3[,c("gene_name","transcript_id")]
+gff3$transcript_id <- gsub("\\.[0-9]*","",gff3$transcript_id)
+gff3.df <- mcols(gff3)
+gff3.df <- as.data.frame(gff3.df)
+names(asd3) <- c("CpG","Motif","FPR","Factor","Evidence","Curated","TF","transcript_id")
+asd4 <- merge(asd3,gff3.df,by="transcript_id")
+gff3.df.xs <- unique(gff3.df)
+asd4 <- asd3[,c("TF","transcript_id","FPR")]
+asd5 <- unique(asd4)
+asd6 <- merge(asd5,gff3.df.xs,by="transcript_id")
+asd6$transcript_id <- NULL
+asd7 <- (unique(asd6))
+# we use the list of TxIDs after filtering
+#
+expressed <- as.character(read.table("~/../Prostate_GAS/resources/TxIDs/TxIDs_25_10",head=F)$V1)
+gff3.df.xs.expr <- gff3.df.xs[which(gff3.df.xs$transcript_id %in% expressed),]
+asd8 <- asd7[which(asd7$TF %in% gff3.df.xs.expr$gene_name),]
+asd9 <- (asd8[which(abs(asd8$FPR) >= 7),])
+asd10 <- asd9[order(asd9$FPR,decreasing=T),]
+library(dplyr)
+asd11.abs <- asd10 %>% group_by(TF,gene_name) %>% filter(abs(FPR) == max(abs(FPR))) %>% arrange(TF,gene_name,FPR)
+# we filter low FPRs
+asd12 <- asd11.abs[which(abs(asd11.abs$FPR) >= 12),]
+write.table(asd12,quote=F,sep="\t",file="GRN.ff.table")

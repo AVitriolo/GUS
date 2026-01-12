@@ -5,7 +5,7 @@ rule slop_TSSs:
         TSS="resources/reference_data/gencode/TSS_to_plot/{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}_{TxID}.bed",
         genome="resources/reference_data/{assembly_code}.chrom.clean.sizes"
     params:
-        slop_distance=config["slop_distances"][0]
+        slop_distance_TSS=config["slop_distances_TSS"][0]
     conda:
         "../envs/bedtools.yml"
     log:
