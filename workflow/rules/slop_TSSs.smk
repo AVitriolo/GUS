@@ -12,5 +12,5 @@ rule slop_TSSs:
         "logs/slop_TSSs/slop_TSSs_{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}_{distance}_{TxID}.log"
     shell:
         """
-        bedtools slop -i {input.TSS} -g {input.genome} -b {params.slop_distance} > {output} 2> {log}
+        bedtools slop -i {input.TSS} -g {input.genome} -b {params.slop_distance_TSS} > {output} 2> {log}
         """

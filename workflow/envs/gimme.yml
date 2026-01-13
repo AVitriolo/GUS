@@ -1,0 +1,9 @@
+name: gimme
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python
+  - genomepy
+  - gimmemotifs

@@ -17,7 +17,7 @@ tss_subsets:
  - pc
 
 sample_types:
- - N
+ - T
  
 distances:
  - 500000

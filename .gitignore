@@ -1,7 +1,7 @@
 .snakemake/
 data/
 results/
-results_backup/
+results_backup_N/
 resources/
 logs/
 .RHistory

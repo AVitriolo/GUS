@@ -1,3 +1,4 @@
+name: r_process_corr_meth_expr
 channels:
   - conda-forge
   - bioconda

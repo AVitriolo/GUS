@@ -2,6 +2,8 @@ options(scipen=999)
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)
 
+`%>%` <- magrittr::`%>%`
+
 input_path_gimme                     <- args$input_path_gimme
 input_path_converter                 <- args$input_path_converter
 input_path_slopped                   <- args$input_path_slopped
@@ -28,7 +30,7 @@ names(gimme_with_conversion_with_slopped) <- c("CpG","Motif","FPR","Factor","Evi
 gff3 <- rtracklayer::import.gff3(input_path_gff)
 gff3 <- gff3[,c("gene_name","transcript_id")]
 gff3$transcript_id <- gsub("\\.[0-9]*","",gff3$transcript_id)
-gff3.df <- mcols(gff3)
+gff3.df <- GenomicRanges::mcols(gff3)
 gff3.df <- as.data.frame(gff3.df)
 gff3.df.xs <- unique(gff3.df)
 

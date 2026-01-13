@@ -162,6 +162,12 @@ include: "rules/get_sel_feats_coordinates.smk"
 include: "rules/get_pairs_with_coords.smk"
 include: "rules/sort_pairs_with_coords.smk"
 include: "rules/slop_pairs_with_coords.smk"
+include: "rules/prepare_pairs_with_coords.smk"
+
+include: "rules/get_genome_for_GRN.smk"
+include: "rules/get_gimme.smk"
+include: "rules/process_gimme.smk"
+
 include: "rules/get_GRN.smk"
 
 sender = config["sender"][0]

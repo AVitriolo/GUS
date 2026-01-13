@@ -35,5 +35,13 @@
 
 - docker
 
-- add download assembly with genomepy
-- add gimme motif rule
+- add conditional param in get_genome_for_GRN
+- add conditional param in get_genome_for_GRN
+
+
+
+REMEMBER TO INSTALL GIMME ENV
+I first installed mamba in my base conda env
+then I installed GIMME
+then genomepy
+then I manually inserted the env in .snakemake folder
