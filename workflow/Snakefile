@@ -170,10 +170,6 @@ include: "rules/process_gimme.smk"
 
 include: "rules/get_GRN.smk"
 
-sender = config["sender"][0]
-app_password = config["app_password"][0]
-recipients = config["recipients"]
-
 assembly_codes = config["assembly_codes"]
 gencode_versions = config["gencode_versions"]
 tss_subsets = config["tss_subsets"]
