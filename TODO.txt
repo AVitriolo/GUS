@@ -45,3 +45,29 @@ I first installed mamba in my base conda env
 then I installed GIMME
 then genomepy
 then I manually inserted the env in .snakemake folder
+
+
+REHEARSAL OF WIP:
+
+- what are SHAP values?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

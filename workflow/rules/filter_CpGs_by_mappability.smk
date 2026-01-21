@@ -2,7 +2,7 @@ rule filter_CpGs_by_mappability:
     output:
         CpGs="resources/CpG_data/coord/{assembly_code}.bed"
     input:
-        dir="resources/cpgea_wgbs_with_coverage_{assembly_code}",
+        dir=config["CpGs_locations"][0],
         mappability="resources/reference_data/mappability/{assembly_code}_k100.bismap.filtered.bedgraph"
     conda:
         "../envs/r_CpGs.yml"

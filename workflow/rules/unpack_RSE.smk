@@ -2,7 +2,7 @@ rule unpack_RSE:
     output:
         temp(directory("data/rse/{assembly_code}_{sample_type}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{TxID}"))
     input:
-        input_dir="resources/cpgea_wgbs_with_coverage_{assembly_code}",
+        input_dir=config["CpGs_locations"][0],
         path_filtered_CpGs="resources/CpG_data/top_K/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{TxID}.bed"
     conda:
         "../envs/r_xgb_input.yml"

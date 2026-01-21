@@ -38,7 +38,7 @@ counts_by_TxID <- as.data.frame(t(counts[TxID, grep(paste0("^",sample_type), col
 CpGs_with_enough_coverage <- process_cov_vals(cov_by_TxID, minCov, minSamples_beta)              # get covered CpGs
 
 beta_by_TxID <- process_beta_vals(beta_by_TxID, leftCount_beta, rightCount_beta, minSamples_beta)     # filter by beta
-beta_by_TxID <- beta_by_TxID[rownames(beta_by_TxID) %in% CpGs_with_enough_coverage,]
+beta_by_TxID <- beta_by_TxID[rownames(beta_by_TxID) %in% CpGs_with_enough_coverage,, drop = FALSE]
 # up until here CpCs x sample
 
 if(nrow(beta_by_TxID) == 0){
@@ -50,28 +50,31 @@ if(nrow(beta_by_TxID) == 0){
 
 CpGs_by_TxID <- CpGs_by_TxID[which(GenomicRanges::mcols(CpGs_by_TxID)$CpGID %in% rownames(beta_by_TxID))]
 
-beta_by_TxID <- beta_by_TxID[match(GenomicRanges::mcols(CpGs_by_TxID)$CpGID,rownames(beta_by_TxID)),]
-
+beta_by_TxID <- beta_by_TxID[match(GenomicRanges::mcols(CpGs_by_TxID)$CpGID,rownames(beta_by_TxID)),, drop = FALSE]
 coord_order <- GenomicRanges::mcols(GenomicRanges::sort(CpGs_by_TxID))$CpGID    
 
 gc()
 
 # from here samples x CpGs
+CpG_names_stored <- rownames(beta_by_TxID)
 beta_by_TxID <- as.data.frame(t(beta_by_TxID))
+colnames(beta_by_TxID) <- CpG_names_stored
 
 beta_by_TxID$sample <- rownames(beta_by_TxID)
 counts_by_TxID$sample <- rownames(counts_by_TxID)
+
 xgb_input <- merge(beta_by_TxID, counts_by_TxID, by = "sample")
 rownames(xgb_input) <- xgb_input$sample; xgb_input$sample <- NULL
 
-sd_per_value <- sapply(xgb_input[,1:(ncol(xgb_input)-1)], sd, na.rm = TRUE) # applies sd for each column 
+sd_per_value <- sapply(xgb_input[,1:(ncol(xgb_input)-1), drop = FALSE], sd, na.rm = TRUE) # applies sd for each column 
 most_variable_CpGs <- names(sd_per_value[order(sd_per_value, decreasing=T)][1:min(length(sd_per_value), (nrow(xgb_input)-1))])
+
 xgb_input <- xgb_input[,c(most_variable_CpGs, TxID)]
 
-xgb_input_wo_target <- xgb_input[,which(!(colnames(xgb_input) %in% TxID))]
+xgb_input_wo_target <- xgb_input[,which(!(colnames(xgb_input) %in% TxID)), drop = FALSE]
 
 coord_order <- coord_order[coord_order %in% colnames(xgb_input_wo_target)]
-xgb_input_wo_target <- xgb_input_wo_target[, coord_order]
+xgb_input_wo_target <- xgb_input_wo_target[, coord_order, drop = FALSE]
 
 correlations_table <- cor(xgb_input_wo_target, method = "spearman")
 

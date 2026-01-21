@@ -8,7 +8,7 @@ tss_subsets:
  - pc
 
 sample_types:
- - T
+ - D
  
 distances:
  - 500000
@@ -35,13 +35,13 @@ minCount_exprs:
   - 25
 
 minSamples_betas:
-  - 90
+  - 70
 
 minCovs:
   - 10
 
 minSamples_exprs:
-  - 10
+  - 8
 
 importances:
   - "shap"
@@ -81,3 +81,6 @@ test_sizes:
 
 CVs:
   - 5
+
+CpGs_locations:
+  - "resources/mcrpc_wgbs_hg38"
