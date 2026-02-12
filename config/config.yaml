@@ -84,3 +84,6 @@ CVs:
 
 CpGs_locations:
   - "resources/mcrpc_wgbs_hg38"
+
+RNA_counts_locations:
+  - "resources/RNA/kallisto_counts.tsv"

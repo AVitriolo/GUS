@@ -1,4 +1,4 @@
-rule filter_counts:
+rule filter_counts_plotting_purposes:
     output:
         counts="resources/RNA/kallisto_counts_{minCount_expr}_{minSamples_expr}.tsv",
         TxIDs="resources/TxIDs/TxIDs_{minCount_expr}_{minSamples_expr}"
@@ -7,7 +7,7 @@ rule filter_counts:
     conda:
         "../envs/r_get_transcriptome.yml"
     log:
-        "logs/filter_counts/filter_counts_{minCount_expr}_{minSamples_expr}.log"
+        "logs/filter_counts_plotting_purposes/filter_counts_plotting_purposes_{minCount_expr}_{minSamples_expr}.log"
     shell:
         """
         Rscript workflow/scripts/filter_counts_new.R \

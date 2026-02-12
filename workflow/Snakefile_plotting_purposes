@@ -1,0 +1,110 @@
+import os
+from snakemake.io import expand
+from scripts.helpers.send_email import send_email
+
+def txids_from_checkpoint_second_round(wildcards):
+    """Return list of TxIDs from checkpoint output (cached)."""
+    chk_output = checkpoints.filter_selected_TxIDs_second_round.get(
+        assembly_code=wildcards.assembly_code,
+        gencode_version=wildcards.gencode_version,
+        tss_subset=wildcards.tss_subset,
+        distance=wildcards.distance,
+        min_CpG = wildcards.min_CpG,
+        minCount_expr=wildcards.minCount_expr,
+        minSamples_expr=wildcards.minSamples_expr,
+        K_closest=wildcards.K_closest
+    ).output[0]
+
+    with open(chk_output) as f:
+        return [x.strip() for x in f]
+
+def txids_from_checkpoint_third_round(wildcards):
+    """Return list of TxIDs from checkpoint output (cached)."""
+    chk_output = checkpoints.filter_selected_TxIDs_third_round.get(
+        assembly_code=wildcards.assembly_code,
+        gencode_version=wildcards.gencode_version,
+        tss_subset=wildcards.tss_subset,
+        distance=wildcards.distance,
+        min_CpG = wildcards.min_CpG,
+        minCount_expr=wildcards.minCount_expr,
+        minSamples_expr=wildcards.minSamples_expr,
+        K_closest=wildcards.K_closest,
+        sample_type=wildcards.sample_type,
+        leftCount_beta=wildcards.leftCount_beta,
+        rightCount_beta=wildcards.rightCount_beta,
+        minSamples_beta=wildcards.minSamples_beta,
+        minCov=wildcards.minCov
+
+    ).output[0]
+
+    with open(chk_output) as f:
+        return [x.strip() for x in f]
+
+include: "rules/filter_selected_TxIDs.smk"
+
+include: "rules/get_gencode_annotation.smk"
+include: "rules/get_TSSs.smk"
+include: "rules/sort_TSSs.smk"
+include: "rules/filter_TSSs.smk"
+
+include: "rules/filter_counts_plotting_purposes.smk"
+
+include: "rules/get_mappability.smk"
+include: "rules/filter_mappability.smk"
+include: "rules/filter_CpGs_by_mappability.smk"
+include: "rules/sort_CpGs.smk"
+
+include: "rules/get_K_closest_CpGs_plotting_purposes.smk"
+include: "rules/filter_TxIDs_and_CpGs_plotting_purposes.smk"
+# filter by distance and minCpGs
+
+include: "rules/filter_beta_cov_plotting_purposes.smk" 
+# intersect topK filtered by distance
+# filter by beta and cov
+# returns CpG_ID
+
+
+include: "rules/plotting_purposes.smk"
+# manipulate dataset
+# - num CpG by TxID
+# - num TxIDs by CpG
+# - distances 
+
+assembly_codes = config["assembly_codes"]
+gencode_versions = config["gencode_versions"]
+tss_subsets = config["tss_subsets"]
+sample_types = config["sample_types"]
+distances = config["distances"]
+min_CpGs = config["min_CpGs"]
+K_closests = config["K_closests"]
+leftCount_betas = config["leftCount_betas"]
+rightCount_betas = config["rightCount_betas"]
+minCount_exprs = config["minCount_exprs"]
+minSamples_betas = config["minSamples_betas"]
+minCovs = config["minCovs"]
+minSamples_exprs = config["minSamples_exprs"]
+importances = config["importances"]
+use_TMRs = config["use_TMRs"][0]
+test_sizes = config["test_sizes"]
+CVs = config["CVs"]
+
+rule all:
+    input:
+
+wildcard_constraints:
+    assembly_code="hg\\d{2}",
+    gencode_version="[0-9]+",
+    tss_subset="[a-z]+",
+    distance = "[0-9]+",
+    sample_type="[A-Z]",
+    minCpG="[0-9]+",
+    leftCount_beta="\\d+(\\.\\d+)?",
+    rightCount_beta="\\d+(\\.\\d+)?",
+    minSamples_beta = "[0-9]+",
+    minCov = "[0-9]+",
+    minCount_expr="[0-9]+",
+    minSamples_expr="[0-9]+",
+    importance="[a-z]+",
+    K_closest="[0-9]+",
+    CV="[0-9]+",
+    test_size="\\d+(\\.\\d+)?"
