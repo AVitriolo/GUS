@@ -1,6 +1,7 @@
 .snakemake/
 data/
 results/
+results_backup_M/
 results_backup_T/
 results_backup_N/
 resources/

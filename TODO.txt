@@ -1,12 +1,20 @@
-- lista di mutazioni frequenti, secondarie, cancerogene, bystander
-	- trova su cluster BAM files
-	- crea BED file con mutations e usa deeptools e conti quante reads in quella regione mutata
-	- prima di deeptools --> grep in cui separo BAM per wt e mutated e calcolo ratio 
+- warning metastases footer
+
+- Gestione NAs:
+	- Tenere NAs
+
+- Automatic elbow finder
+	top k more variable vs elbow
 
 - Improve train_models.py
 	- In particular, improve feature selection + hyperparam tuning
 	- BUT we need nested CV probably
 	- 5 fold is better than 10 in this case because we have too few samples
+
+- lista di mutazioni frequenti, secondarie, cancerogene, bystander
+	- trova su cluster BAM files
+	- crea BED file con mutations e usa deeptools e conti quante reads in quella regione mutata
+	- prima di deeptools --> grep in cui separo BAM per wt e mutated e calcolo ratio 
 
 - create decorrelation function
    - 10:1 observation feature cutoff for sampling
@@ -16,8 +24,6 @@
 - automatized sample selection in PCA space (per giuoco)
 - sample exclusion list sia per metiloma, che per trascrittoma (per obbligo)
 
-- Automatic elbow finder
-	top k more variable vs elbow
 
 - improve feature selection
 	in case of ties, which features?
