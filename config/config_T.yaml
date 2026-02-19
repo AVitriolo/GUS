@@ -1,0 +1,89 @@
+assembly_codes:
+ - hg38
+
+gencode_versions:
+ - "38"
+
+tss_subsets:
+ - pc
+
+sample_types:
+ - T
+ 
+distances:
+ - 500000
+
+slop_distances_TSS:
+ - 100000
+
+slop_distances_pairs_with_coords:
+ - 25
+
+min_CpGs:
+ - 50
+
+K_closests:
+ - 5000
+
+leftCount_betas:
+  - 0.5
+
+rightCount_betas:
+  - 0.5
+
+minCount_exprs:
+  - 25
+
+minSamples_betas:
+  - 90
+
+minCovs:
+  - 10
+
+minSamples_exprs:
+  - 10
+
+importances:
+  - "shap"
+
+selected_txIDs_location:
+  - "resources/TxIDs/selected_TxIDs"
+
+TMRs_dir:
+  - "resources/TMRs"
+
+converter_location:
+  - "resources/converter/motif2factors.txt"
+
+use_TMRs:
+  - 1
+
+n_jobs_xgboost:
+  - 10
+
+n_jobs_sklearn:
+  - 1
+
+n_iter_rsearch:
+  - 27
+
+verbosity:
+  - 0
+
+num_features_threshold:
+  - 23
+
+hypertune_random_state_rsearch:
+  - 21
+
+test_sizes:
+  - 0.3
+
+CVs:
+  - 5
+
+CpGs_locations:
+  - "resources/cpgea_wgbs_with_coverage_hg38"
+
+RNA_counts_locations:
+  - "resources/RNA/kallisto_counts_NT.tsv"
