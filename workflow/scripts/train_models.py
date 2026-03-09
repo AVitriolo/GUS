@@ -129,10 +129,20 @@ for random_init in random_inits_xgboost:
 				obs_pred_table.to_csv(args.output_path_obs_pred, sep = "\t", header=True, doublequote=False)
 
 				r2 = sklearn.metrics.r2_score(y_train, predictions)
+				
+				r2_adj = 0
+				r2_cv = 0
+				#r2_test = 0
+	
 				rmse = sklearn.metrics.root_mean_squared_error(y_train, predictions)
 
-				with open(args.output_path_performance, 'w') as fp:
-					fp.write("r2" + "\t" + str(r2) + "\n" + "rmse" + "\t" + str(rmse) + "\n")
+				with open(args.output_path_performance, 'w') as f:
+					f.write(
+						"r2\t" + str(r2) + "\n" +
+						"r2_adj\t" + str(r2_adj) + "\n" +
+						"r2_cv\t" + str(r2_cv) + "\n" +
+						"rmse\t" + str(rmse) + "\n"
+					)
 
 				with open(args.output_path_sel_feats, 'w') as fp:
 					pass
@@ -175,6 +185,7 @@ for random_init in random_inits_xgboost:
 		feature_importance_df.to_csv(args.output_path_feat_imp, sep = "\t", header=True, doublequote=False)
 
 		predictions = model.predict(X_train_reduced)
+		predictions_test = model.predict(X_test_reduced)
 
 		obs_pred_table = pandas.concat(
 			[
@@ -189,10 +200,22 @@ for random_init in random_inits_xgboost:
 		obs_pred_table.to_csv(args.output_path_obs_pred, sep = "\t", header=True, doublequote=False)
 
 		r2 = sklearn.metrics.r2_score(y_train, predictions)
+
+		num_rows = X.shape[0]
+		num_cols = X_train_reduced.shape[1]
+		
+		r2_adj = 1 - (((1 - r2)*(num_rows - 1))/(num_rows - num_cols - 1))
+		r2_cv = sklearn.model_selection.cross_val_score(estimator = model, X = X_train_reduced, y = y_train, scoring = "r2", cv = args.cv).mean()
+		#r2_test = sklearn.metrics.r2_score(y_test, predictions_test)		
 		rmse = sklearn.metrics.root_mean_squared_error(y_train, predictions)
 
-		with open(args.output_path_performance, 'w') as fp:
-			fp.write("r2" + "\t" + str(r2) + "\n" + "rmse" + "\t" + str(rmse) + "\n")
+		with open(args.output_path_performance, 'w') as f:
+			f.write(
+				"r2\t" + str(r2) + "\n" +
+				"r2_adj\t" + str(r2_adj) + "\n" +
+				"r2_cv\t" + str(r2_cv) + "\n" +
+				"rmse\t" + str(rmse) + "\n"
+			)
 
 		shap_values_df = pandas.DataFrame(shap_values, index = X_train_reduced.index, columns = X_train_reduced.columns)
 		shap_values_df.to_csv(args.output_path_shap, sep = "\t", header=True, doublequote=False)

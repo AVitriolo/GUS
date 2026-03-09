@@ -47,7 +47,7 @@ importances:
   - "shap"
 
 selected_txIDs_location:
-  - "resources/TxIDs/selected_TxIDs"
+  - "resources/TxIDs/cancerGeneList_processed.tsv"
 
 TMRs_dir:
   - "resources/TMRs"
@@ -56,7 +56,7 @@ converter_location:
   - "resources/converter/motif2factors.txt"
 
 use_TMRs:
-  - 1
+  - 0
 
 n_jobs_xgboost:
   - 10
@@ -71,7 +71,7 @@ verbosity:
   - 0
 
 num_features_threshold:
-  - 23
+  - 1
 
 hypertune_random_state_rsearch:
   - 21
@@ -87,3 +87,22 @@ CpGs_locations:
 
 RNA_counts_locations:
   - "resources/RNA/kallisto_counts.tsv"
+
+bootstraps:
+  - 10
+  - 15
+  - 20
+  - 25
+  - 30
+  - 35
+  - 40
+  - 45
+  - 50
+  - 55
+  - 60
+  - 65
+  - 70
+  - 75
+  - 80
+  - 85
+  - 90

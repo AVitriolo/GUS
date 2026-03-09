@@ -16,6 +16,7 @@ minCov                                    <- as.numeric(args$minCov)
 leftCount_beta                            <- as.numeric(args$leftCount_beta)
 rightCount_beta                           <- as.numeric(args$rightCount_beta)
 minSamples_beta                           <- as.integer(args$minSamples_beta)
+bootstrap                                 <- args$bootstrap
 output_path_xgb                           <- args$output_path_xgb
 output_path_corr                          <- args$output_path_corr
 
@@ -113,6 +114,9 @@ counts_by_TxID$sample <- rownames(counts_by_TxID)
 
 xgb_input <- merge(beta_by_TxID, counts_by_TxID, by = "sample")
 rownames(xgb_input) <- xgb_input$sample; xgb_input$sample <- NULL
+
+xgb_input <- xgb_input[1:bootstrap,]
+# 
 
 non_CpGs <- colnames(xgb_input)[grep(pattern="^CpG", colnames(xgb_input), invert = TRUE)]                 # greps tmrID and TxID, they both follow ^id pattern
 

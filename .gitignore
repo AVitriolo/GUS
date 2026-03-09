@@ -2,6 +2,8 @@
 data/
 results/
 results_backup_M/
+results_backup_M_*/
+resources_backup_M_*/
 results_backup_T/
 results_backup_N/
 resources/

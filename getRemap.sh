@@ -1,0 +1,2 @@
+wget https://remap.univ-amu.fr/storage/remap2022/hg38/MACS2/remap2022_nr_macs2_hg38_v1_0.bed.gz
+gunzip remap2022_nr_macs2_hg38_v1_0.bed.gz
