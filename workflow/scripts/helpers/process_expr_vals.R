@@ -3,6 +3,7 @@ source("workflow/scripts/helpers/filterGenes.R")
 
 process_expr_vals <- function(input_expr_values_path, minCount_expr, minSamples_expr){
     ExprValues <- read.table(input_expr_values_path,head=T) # "RNA/kallisto_counts.tsv"
+    ExprValues$transcript_id <- gsub("\\.[0-9]*", "", ExprValues$transcript_id)
     rownames(ExprValues) <- ExprValues$transcript_id
     ExprValues$transcript_id <- NULL
     ExprValues.f <- ExprValues[, which(colSums(ExprValues) >= 5000000)]

@@ -21,6 +21,7 @@ parser.add_argument('--hypertune_random_state_rsearch', dest='hypertune_random_s
 parser.add_argument('--error_score', dest='error_score', type=str, help='Add error_score')
 parser.add_argument('--tree_method', dest='tree_method', type=str, help='Add tree_method')
 parser.add_argument('--device', dest='device', type=str, help='Add device')
+parser.add_argument('--use_all_CpGs', dest='use_all_CpGs', type=int, help='Add use_all_CpGs')
 parser.add_argument('--TxID', dest='TxID', type=str, help='Add TxID')
 parser.add_argument('--input_path', dest='input_path', type=str, help='Add input_path')
 parser.add_argument('--output_path_plot', dest='output_path_plot', type=str, help='Add output_path_plot')
@@ -33,18 +34,36 @@ parser.add_argument('--output_path_shap', dest='output_path_shap', type=str, hel
 
 args = parser.parse_args()
 
-search_space = {
-	'learning_rate': scipy.stats.uniform(0.01, 0.29),
-	'max_depth': scipy.stats.randint(5, 10),
-	'min_child_weight': scipy.stats.randint(20, 40),
-	'gamma': scipy.stats.loguniform(0.25, 1.0),
-	'subsample': scipy.stats.uniform(0.75, 0.25),
-	'colsample_bytree': scipy.stats.uniform(0.7, 0.3),
-	'colsample_bylevel': scipy.stats.uniform(0.7, 0.3),
-	'reg_alpha': scipy.stats.loguniform(1e-3, 10),
-	'reg_lambda': scipy.stats.loguniform(0.1, 100),
-	'n_estimators': scipy.stats.randint(200, 300)
-}
+if args.use_all_CpGs:
+
+    search_space = {
+	    'learning_rate': scipy.stats.uniform(0.01, 0.29),
+	    'max_depth': scipy.stats.randint(5, 10),
+	    'min_child_weight': scipy.stats.randint(20, 40),
+	    'gamma': scipy.stats.loguniform(0.25, 1.0),
+	    'subsample': scipy.stats.uniform(0.75, 0.25),
+	    'colsample_bytree': 1,
+	    'colsample_bylevel': 1,
+	    'reg_alpha': scipy.stats.loguniform(1e-3, 10),
+	    'reg_lambda': scipy.stats.loguniform(0.1, 100),
+	    'n_estimators': scipy.stats.randint(200, 300)
+    }
+
+else:
+
+    search_space = {
+        'learning_rate': scipy.stats.uniform(0.01, 0.29),
+        'max_depth': scipy.stats.randint(5, 10),
+        'min_child_weight': scipy.stats.randint(20, 40),
+        'gamma': scipy.stats.loguniform(0.25, 1.0),
+        'subsample': scipy.stats.uniform(0.75, 0.25),
+        'colsample_bytree': scipy.stats.uniform(0.7, 0.3),
+        'colsample_bylevel': scipy.stats.uniform(0.7, 0.3),
+        'reg_alpha': scipy.stats.loguniform(1e-3, 10),
+        'reg_lambda': scipy.stats.loguniform(0.1, 100),
+        'n_estimators': scipy.stats.randint(200, 300)
+    }
+
 
 xgb_dataset = pandas.read_csv(args.input_path, sep = "\t", header = 0)
 

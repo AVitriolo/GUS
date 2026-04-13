@@ -1,4 +1,4 @@
-rule train_models:
+rule train_models_bootstrap:
     output:
         plot_path="results/plots/ML/sel_feats/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{bootstrap}_{TxID}.pdf",
         performance_path="results/performance/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{bootstrap}_{TxID}",
@@ -15,11 +15,12 @@ rule train_models:
         n_iter_rsearch=config["n_iter_rsearch"][0],
         verbosity=config["verbosity"][0],
         num_features_threshold=config["num_features_threshold"][0],
-        hypertune_random_state_rsearch=config["hypertune_random_state_rsearch"][0]
+        hypertune_random_state_rsearch=config["hypertune_random_state_rsearch"][0],
+	use_all_CpGs=config["use_all_CpGss"][0]
     conda:
         "../envs/py_ML.yml"
     log:
-        "logs/train_models/train_models_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{bootstrap}_{TxID}.log"
+        "logs/train_models_bootstrap/train_models_bootstrap_{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{bootstrap}_{TxID}.log"
     shell:
         """
         python workflow/scripts/train_models.py \
@@ -34,6 +35,7 @@ rule train_models:
         --error_score="raise" \
         --tree_method="hist" \
         --device="cpu" \
+	--use_all_CpGs=use_all_CpGs \
         --TxID={wildcards.TxID} \
         --input_path={input} \
         --output_path_plot={output.plot_path} \

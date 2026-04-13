@@ -88,6 +88,9 @@ CpGs_locations:
 RNA_counts_locations:
   - "resources/RNA/kallisto_counts.tsv"
 
+use_all_CpGss:
+  - 1
+
 bootstraps:
   - 10
   - 15
