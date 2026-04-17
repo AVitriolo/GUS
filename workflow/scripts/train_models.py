@@ -42,8 +42,8 @@ if args.use_all_CpGs:
 	    'min_child_weight': scipy.stats.randint(20, 40),
 	    'gamma': scipy.stats.loguniform(0.25, 1.0),
 	    'subsample': scipy.stats.uniform(0.75, 0.25),
-	    'colsample_bytree': 1,
-	    'colsample_bylevel': 1,
+	    'colsample_bytree': scipy.stats.uniform(1, 0),
+	    'colsample_bylevel': scipy.stats.uniform(1, 0),
 	    'reg_alpha': scipy.stats.loguniform(1e-3, 10),
 	    'reg_lambda': scipy.stats.loguniform(0.1, 100),
 	    'n_estimators': scipy.stats.randint(200, 300)

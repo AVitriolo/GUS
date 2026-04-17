@@ -16,7 +16,7 @@ rule train_models:
         verbosity=config["verbosity"][0],
         num_features_threshold=config["num_features_threshold"][0],
         hypertune_random_state_rsearch=config["hypertune_random_state_rsearch"][0],
-	use_all_CpGs = config["use_all_CpGss"][0]
+	    use_all_CpGs = config["use_all_CpGss"][0]
     conda:
         "../envs/py_ML.yml"
     log:

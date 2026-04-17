@@ -16,7 +16,7 @@ rule train_models_bootstrap:
         verbosity=config["verbosity"][0],
         num_features_threshold=config["num_features_threshold"][0],
         hypertune_random_state_rsearch=config["hypertune_random_state_rsearch"][0],
-	use_all_CpGs=config["use_all_CpGss"][0]
+	    use_all_CpGs=config["use_all_CpGss"][0]
     conda:
         "../envs/py_ML.yml"
     log:
@@ -35,7 +35,7 @@ rule train_models_bootstrap:
         --error_score="raise" \
         --tree_method="hist" \
         --device="cpu" \
-	--use_all_CpGs=use_all_CpGs \
+	    --use_all_CpGs=use_all_CpGs \
         --TxID={wildcards.TxID} \
         --input_path={input} \
         --output_path_plot={output.plot_path} \
