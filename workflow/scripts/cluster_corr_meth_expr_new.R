@@ -4,6 +4,8 @@ options(scipen = 999)
 
 args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)
 
+`%>%` <- magrittr::`%>%`
+
 input_path_corr  <- args$input_path_corr
 output_path_corr <- args$output_path_corr
 output_path_plot <- args$output_path_plot

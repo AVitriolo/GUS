@@ -14,7 +14,7 @@ cpgs <- xgb_input[,  !(colnames(xgb_input) %in% TxID), drop = FALSE]
 cor_stat <- apply(X = cpgs, 
 				  MARGIN = 2, 
 				  FUN = function(cpg){
-							test <- cor(cpg, expr)
+							test <- cor.test(cpg, expr)
 							stat <- test$statistic
 							}
 						)
@@ -22,12 +22,14 @@ cor_stat <- apply(X = cpgs,
 cor_pval <- apply(X = cpgs, 
 				  MARGIN = 2, 
 				  FUN = function(cpg){
-							test <- cor(cpg, expr)
+							test <- cor.test(cpg, expr)
 							pval <- test$p.value
 							}
 						)
 
-cor_results_df <- data.frame(CpG = names(cor_results), 
+names(cor_stat) == names(cor_pval)
+
+cor_results_df <- data.frame(CpG = names(cor_stat), 
 							 correlation = as.numeric(cor_stat), 
 							 pvalue = as.numeric(cor_pval))
 

@@ -32,11 +32,12 @@ cluster_corr <- function(input_path, output_corr, output_plot, TxID) {
 
       pos <- as.numeric(corr$start)
       corr$sign <- ifelse(corr$score > 0, "pos", ifelse(corr$score < 0, "neg", "neut"))
+      corr$sign <- as.numeric(as.factor(corr$sign))
       corr <- corr[order(corr$start), ]
       corr$sign_run <- cumsum(c(TRUE,diff(corr$sign) != 0))
       corr <- corr %>%
-	group_by(sign_run) %>%
-	mutate(
+	    dplyr::group_by(sign_run) %>%
+	    dplyr::mutate(
 	       dist = c(0, diff(start)),
 	       cluster = cumsum(dist > max_dist) 
 	       )
