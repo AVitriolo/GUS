@@ -129,8 +129,8 @@ include: "rules/filter_selected_TxIDs_third_round.smk"
 
 include: "rules/corr_meth_expr.smk"
 include: "rules/aggregate_corr_meth_expr.smk"
-include: "rules/process_corr_meth_expr.smk"
-include: "rules/cluster_corr_meth_expr.smk"
+include: "rules/process_corr_meth_expr_new.smk"
+include: "rules/cluster_corr_meth_expr_new.smk"
 include: "rules/aggregate_clusters.smk"
 
 include: "rules/train_models.smk"

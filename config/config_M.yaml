@@ -11,7 +11,7 @@ sample_types:
  - D
  
 distances:
- - 500000
+ - 20000
 
 slop_distances_TSS:
  - 100000
@@ -47,7 +47,7 @@ importances:
   - "shap"
 
 selected_txIDs_location:
-  - "resources/TxIDs/cancerGeneList_processed.tsv"
+  - "resources/TxIDs/selected_TxIDs"
 
 TMRs_dir:
   - "resources/TMRs"
