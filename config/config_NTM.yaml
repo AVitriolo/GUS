@@ -1,0 +1,120 @@
+assembly_codes:
+ - hg38
+
+gencode_versions:
+ - "38"
+
+tss_subsets:
+ - pc
+
+sample_types:
+ - NTM
+ 
+distances:
+ - 25000
+
+slop_distances_TSS:
+ - 100000
+
+slop_distances_pairs_with_coords:
+ - 25
+
+min_CpGs:
+ - 50
+
+K_closests:
+ - 5000
+
+leftCount_betas:
+  - 0.5
+
+rightCount_betas:
+  - 0.5
+
+minCount_exprs:
+  - 25
+
+minSamples_betas:
+  - 90
+
+minCovs:
+  - 10
+
+minSamples_exprs:
+  - 10
+
+importances:
+  - "shap"
+
+selected_txIDs_location:
+  - "resources/TxIDs/selected_TxIDs"
+
+TMRs_dir:
+  - "resources/TMRs"
+
+converter_location:
+  - "resources/converter/motif2factors.txt"
+
+use_TMRs:
+  - 0
+
+n_jobs_xgboost:
+  - 10
+
+n_jobs_sklearn:
+  - 1
+
+n_iter_rsearch:
+  - 27
+
+verbosity:
+  - 0
+
+num_features_threshold:
+  - 1
+
+hypertune_random_state_rsearch:
+  - 21
+
+test_sizes:
+  - 0.3
+
+CVs:
+  - 5
+
+cpgea_wgbs_location:
+  - "resources/cpgea_wgbs_with_coverage_hg38"
+
+mcrpc_wgbs_location:
+  - "resources/mcrpc_wgbs_hg38"
+
+RNA_counts_locations_NT:
+  - "resources/RNA/kallisto_counts_NT.tsv"
+
+RNA_counts_locations_M:
+  - "resources/RNA/kallisto_counts_M.tsv"
+
+use_all_CpGss:
+  - 1
+
+bootstraps:
+  - 10
+  - 15
+  - 20
+  - 25
+  - 30
+  - 35
+  - 40
+  - 45
+  - 50
+  - 55
+  - 60
+  - 65
+  - 70
+  - 75
+  - 80
+  - 85
+  - 90
+  - 95
+  - 100
+  

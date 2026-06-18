@@ -8,6 +8,7 @@ results_backup_T/
 results_backup_N/
 resources/
 logs/
+logs_bkup/
 .Rhistory
 .RData
 snakemake_*.out

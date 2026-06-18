@@ -1,0 +1,18 @@
+name: dataset_integration
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.5
+  - r-essentials
+  - r-r.utils
+  - bioconductor-summarizedexperiment
+  - bioconductor-genomicranges
+  - bioconductor-hdf5array
+  - bioconductor-delayedmatrixstats
+  - bioconductor-biocparallel
+  - r-biocmanager
+  - r-dplyr
+  - r-rcpparmadillo
+  - compilers

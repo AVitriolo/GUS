@@ -14,4 +14,7 @@ dependencies:
   - r-xml2
   - libxml2
   - libpng
-  - bioconductor-complexheatmap 
+  - bioconductor-complexheatmap
+  - bioconductor-hdf5array
+  - bioconductor-summarizedexperiment
+  - bioconductor-genomicranges 

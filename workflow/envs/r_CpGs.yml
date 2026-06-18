@@ -9,3 +9,7 @@ dependencies:
   - r-r.utils
   - bioconductor-hdf5array
   - bioconductor-summarizedexperiment
+  - bioconductor-genomicranges
+  - bioconductor-genomeinfodb
+  - bioconductor-s4vectors
+  - r-data.table

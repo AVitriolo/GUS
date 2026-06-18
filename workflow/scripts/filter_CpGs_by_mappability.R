@@ -1,4 +1,4 @@
-source("workflow/scripts/helpers/load_h5_rse.R")
+source("workflow/scripts/helpers/load_h5_rse_integrated.R")
 
 options(scipen=999)                                                               #  unable scientific notation           
 
@@ -10,7 +10,7 @@ output_path                  <- args$output_path
 
 #### LOAD CpGs
 
-h5_list <- load_h5_rse(input_dir)
+h5_list <- load_h5_rse_integrated(input_dir)
 rse <- h5_list$rse
 CpGs <- h5_list$CpGs
 
