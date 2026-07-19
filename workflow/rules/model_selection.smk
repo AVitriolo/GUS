@@ -10,9 +10,9 @@ rule model_selection:
     params:
         n_jobs    = 10,
         test_size = 0.3,
-        cv        = 5,
+        cv        = 3,  
         n_iter    = 15,
-        optimizer = "RandomSearchCV",
+        optimizer = "GridSearchCV",
         selected_model = "KNeighborsRegressor",
         output_dir_models = "results/models"
     conda:

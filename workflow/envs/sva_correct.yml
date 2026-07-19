@@ -1,0 +1,16 @@
+name: sva_correct
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - bioconductor-edger
+  - bioconductor-limma
+  - bioconductor-sva
+  - bioconductor-HDF5Array
+  - bioconductor-SummarizedExperiment
+  - bioconductor-DelayedMatrixStats
+  - r-ggplot2
+  - r-matrixstats
+  - r-yaml

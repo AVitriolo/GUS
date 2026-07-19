@@ -1,5 +1,5 @@
-configfile: "config/config.yaml"
-
+configfile: "config/config_NTM.yaml"
+print(config.keys())
 assembly_codes   = config["assembly_codes"]
 gencode_versions = config["gencode_versions"]
 tss_subsets      = config["tss_subsets"]
@@ -15,6 +15,10 @@ minCovs          = config["minCovs"]
 minSamples_exprs = config["minSamples_exprs"]
 test_sizes = config["test_sizes"]
 CVs        = config["CVs"]
+
+
+BC_RNA = int(config["batch_correction_rna"][0])
+BC_METH = int(config["batch_correction_meth"][0])
 
 def txids_from_checkpoint_second_round_NTM(wildcards):
     chk_output = checkpoints.filter_selected_TxIDs_second_round_NTM.get(
@@ -57,30 +61,46 @@ def get_txid_merge_CpGs_NTM(wildcards):
         TxID=txids, **wildcards
     )
 
-def get_txid_xgb_input_clustered_NTM(wildcards):
-    txids = txids_from_checkpoint_second_round_NTM(wildcards)
-    return expand(
-        "data/xgb_clustered/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered.txt",
-        TxID=txids, **wildcards
-    )
-
 def get_txid_model_selection(wildcards):
     txids = txids_from_checkpoint_second_round_NTM(wildcards)
     return expand(
-        "results/hyper/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{test_size}_{CV}_{TxID}",
+        "results/hyper/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}_{TxID}",
         TxID=txids, **wildcards
     )
 
+def counts_train(wc):
+    sfx = "_combat" if BC_RNA else ""
+    return f"resources/RNA/kallisto_counts_NTM_train{sfx}_{wc.minCount_expr}_{wc.minSamples_expr}.tsv"
+
+def counts_test(wc):
+    sfx = "_combat" if BC_RNA else ""
+    return f"resources/RNA/kallisto_counts_NTM_test{sfx}_{wc.minCount_expr}_{wc.minSamples_expr}.tsv"
+
+def integrated_h5(wc=None):
+    return ("resources/integrated_wgbs_hdf5/integrated_wgbs_combat.h5" if BC_METH
+            else "resources/integrated_wgbs_hdf5/integrated_wgbs.h5")
+
+def get_txid_xgb_input_clustered_NTM(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "data/xgb_clustered/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered_{set}.txt",
+        TxID=txids, set=["train", "test"], **wildcards
+    )
+
 ruleorder: filter_CpGs_by_mappability > sort_CpGs > slop_TSSs_window > filter_TSSs > sort_TSSs > get_TSSs
+
+
 
 wildcard_constraints:
     assembly_code = "hg\\d{2}"
 
 rule all:
     input:
+        # integration always runs
         "resources/integrated_wgbs_hdf5/integrated_wgbs.h5",
         "resources/integrated_wgbs_hdf5/integrated_wgbs_rowRanges.rds",
         "resources/integrated_wgbs_hdf5/integrated_wgbs_colData.rds",
+        "resources/integrated_wgbs_hdf5/integrated_wgbs_train_fit.rds",
         expand(
             "resources/reference_data/gencode/gencode.v{gencode_version}.annotation.gff3.gz",
             gencode_version=gencode_versions
@@ -111,15 +131,21 @@ rule all:
             minSamples_expr=minSamples_exprs
         ),
         expand(
-            "resources/RNA/kallisto_counts_NTM_{minCount_expr}_{minSamples_expr}.tsv",
+            "resources/RNA/kallisto_counts_NTM_train_{minCount_expr}_{minSamples_expr}.tsv",
             minCount_expr=minCount_exprs,
             minSamples_expr=minSamples_exprs
         ),
         expand(
-            "resources/TxIDs/TxIDs_NTM_{minCount_expr}_{minSamples_expr}",
+            "resources/RNA/kallisto_counts_NTM_test_{minCount_expr}_{minSamples_expr}.tsv",
             minCount_expr=minCount_exprs,
             minSamples_expr=minSamples_exprs
         ),
+        "resources/split/split_summary.tsv",
+        expand(
+            "results/plots/batch_correct/rna_combat_by_dataset_{minCount_expr}_{minSamples_expr}.pdf",
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ) if BC_RNA else [],
         expand(
             "resources/reference_data/mappability/{assembly_code}_k100.bismap.bedgraph",
             assembly_code=assembly_codes
@@ -244,14 +270,13 @@ rule all:
             minSamples_expr=minSamples_exprs
         ),
         expand(
-            "results/checks/model_selection/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{test_size}_{CV}",
+            "results/checks/model_selection/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}",
             assembly_code=assembly_codes,
             gencode_version=gencode_versions,
             tss_subset=tss_subsets,
             distance=distances,
             minCount_expr=minCount_exprs,
             minSamples_expr=minSamples_exprs,
-            test_size=test_sizes,
             CV=CVs
         )
 
@@ -306,15 +331,15 @@ rule all_model_selection:
     input:
         get_txid_model_selection
     output:
-        "results/checks/model_selection/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{test_size}_{CV}"
+        "results/checks/model_selection/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}"
     shell:
         """
         echo {input} >> {output}
         """
 
 
-include: "rules/integrate_datasets.smk"
-include: "rules/filter_counts_NTM.smk"
+include: "rules/integrate_datasets_split.smk"
+include: "rules/filter_counts_NTM_split.smk"
 include: "rules/filter_selected_TxIDs_NTM.smk"
 include: "rules/get_gencode_annotation.smk"
 include: "rules/get_TSSs.smk"
@@ -331,11 +356,16 @@ include: "rules/intersect_CpGs_TSSs.smk"
 include: "rules/filter_selected_TxIDs_second_round_NTM.smk"
 include: "rules/unpack_topK_NTM.smk"
 include: "rules/unpack_RSE_NTM.smk"
-include: "rules/compute_pairwise_correlation.smk"
-include: "rules/merge_CpGs.smk"
+include: "rules/compute_pairwise_correlation_split.smk"
+include: "rules/merge_CpGs_split.smk"
 include: "rules/plot_n_clusters_per_txid.smk"
-include: "rules/xgb_input_clustered.smk"
-include: "rules/model_selection.smk"
+include: "rules/xgb_input_clustered_split.smk"
+include: "rules/model_selection_split.smk"
+include: "rules/split_samples.smk"
+include: "rules/batch_correct_rna.smk"
+include: "rules/export_wgbs_samples.smk"
+include: "rules/batch_correct_meth.smk"
+include: "rules/export_meth_metadata.smk"
 
 wildcard_constraints:
     assembly_code="hg\\d{2}",
@@ -353,5 +383,5 @@ wildcard_constraints:
     importance="[a-z]+",
     K_closest="[0-9]+",
     CV="[0-9]+",
-    test_size="\\d+(\\.\\d+)?"
+    test_size="\\d+(\\.\\d+)?",
 

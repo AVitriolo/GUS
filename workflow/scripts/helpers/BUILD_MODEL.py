@@ -9,7 +9,7 @@ def BUILD_MODEL(MODEL):
     if MODEL == "XGBRegressor":
         model = XGBRegressor(n_jobs=1)
     elif MODEL == "KNeighborsRegressor":
-        model = KNeighborsRegressor(n_jobs=1)
+        model = KNeighborsRegressor(n_jobs=10)
     elif MODEL == "LinearRegression":
         model = LinearRegression()
     elif MODEL == "SVR":

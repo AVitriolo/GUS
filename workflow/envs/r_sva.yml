@@ -1,0 +1,15 @@
+name: r_sva
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - bioconductor-sva
+  - bioconductor-limma
+  - r-ggplot2
+  - r-matrixstats
+  - r-r.utils
+  - bioconductor-rhdf5
+  - bioconductor-hdf5array
+  - bioconductor-delayedmatrixstats

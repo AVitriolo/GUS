@@ -2,7 +2,7 @@ rule unpack_RSE_NTM:
     output:
         temp(directory("data/rse_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}"))
     input:
-        input_dir          = "resources/integrated_wgbs_hdf5/integrated_wgbs.h5",
+        input_dir          = integrated_h5,                   # <-- resolver
         path_filtered_CpGs = "resources/CpG_data/top_K/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}.bed"
     conda:
         "../envs/r_xgb_input.yml"

@@ -1,0 +1,11 @@
+name: py_combat
+channels: [conda-forge, defaults]
+dependencies:
+  - python
+  - numpy
+  - pandas
+  - h5py
+  - scikit-learn
+  - matplotlib
+  - pip
+  - pip: [inmoose]

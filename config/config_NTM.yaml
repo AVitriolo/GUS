@@ -11,7 +11,7 @@ sample_types:
  - NTM
  
 distances:
- - 25000
+ - 50000
 
 slop_distances_TSS:
  - 100000
@@ -80,7 +80,7 @@ test_sizes:
   - 0.3
 
 CVs:
-  - 5
+  - 3
 
 cpgea_wgbs_location:
   - "resources/cpgea_wgbs_with_coverage_hg38"
@@ -118,3 +118,26 @@ bootstraps:
   - 95
   - 100
   
+split_seeds:
+  - 48047510
+
+min_libsizes:
+  - 5000000
+
+stratify_splits:
+  - 1
+
+n_svs:
+  - 2
+
+batch_correction_rna:
+  - 1                # 1 = apply fsva, 0 = skip
+
+n_top_cpgs_sva:
+  - 100000
+
+check_sv_stability:
+  - 1          # run the subset-stability check on the first run
+
+batch_correction_meth:
+  - 1

@@ -28,7 +28,7 @@ from workflow.scripts.helpers.SUBSET_DATA_BY_IDXS import *
 from workflow.scripts.helpers.OPTIMIZE_HYPERPARAMS import *
 from workflow.scripts.helpers.GET_EXPLAINER import *
 
-from workflow.scripts.helpers.EVALUATE_PERFORMANCES import *
+from workflow.scripts.helpers.EVALUATE_PERFORMANCE_nocv import *
 from workflow.scripts.helpers.AGGREGATE_SELECTED_FEATURES import *
 
 sys.stdout = sys.stderr
@@ -121,12 +121,12 @@ for MODEL in MODELS:
     print(f"[{MODEL}] Selected {len(selected_features)} features")
 
     t0 = time.time()
-    performances_train = EVALUATE_PERFORMANCES(best_model, X_train, y_train, CV, METRICS_LIST)
-    performances_test = EVALUATE_PERFORMANCES(best_model, X_test, y_test, 1, METRICS_LIST)
+    performances_train = EVALUATE_PERFORMANCES(best_model, X_train, y_train, METRICS_LIST, prefix="train")
+    performances_test = EVALUATE_PERFORMANCES(best_model, X_test, y_test, METRICS_LIST, prefix="test")
     print(f"[{MODEL}] Performance evaluation done in {time.time() - t0:.2f}s")
 
     performances = dict()
-    for performance in [performances_train, performances_test]:
+    for performance in [performances_train, performances_test]: 
         performances.update(performance)
 
     model_final = best_model.named_steps["model"]
@@ -185,7 +185,7 @@ with open(args.output_path_selected_features, 'w') as fp:
 
 best_model_shap.to_csv(args.output_path_shap, sep = "\t", header=True, doublequote=False)
 
-jbl.dump(best_model_object, (args.output_dir_models + "/" + type(best_model_object).__name__ + ".pkl"))
+jbl.dump(best_model_object, (args.output_dir_models + "/" + TxID + "_" + type(best_model_object).__name__ + ".pkl"))
 print(f"Outputs saved in {time.time() - t0:.2f}s")
 
 print(f"\n=== Total script time: {time.time() - script_start:.2f}s ===")

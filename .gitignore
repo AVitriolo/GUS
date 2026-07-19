@@ -1,11 +1,12 @@
 .snakemake/
-data/
+data*/
 results/
 results_backup_M/
 results_backup_M_*/
 resources_backup_M_*/
 results_backup_T/
 results_backup_N/
+new_results_bkp_10txids/
 resources/
 logs/
 logs_bkup/
@@ -14,3 +15,7 @@ logs_bkup/
 snakemake_*.out
 github_tokens
 convertiontable*
+logs_NTM*/
+results_NTM*/
+diagnostics/
+

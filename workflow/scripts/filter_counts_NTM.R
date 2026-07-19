@@ -22,11 +22,13 @@ ExprValues.tmm <- process_expr_vals_NTM(input_expr_values_path_NT,
                                          minCount_expr,
                                          minSamples_expr)
 
-write.table(ExprValues.tmm,
+log_counts <- log2(as.matrix(ExprValues.tmm) + 1)
+
+write.table(log_counts,
             file    = output_path_counts,
             col.names = TRUE,
             row.names = TRUE,
             quote   = FALSE,
             sep     = "\t")
 
-writeLines(text = rownames(ExprValues.tmm), con = output_path_TxIDs, sep = "\n")
+writeLines(text = rownames(log_counts), con = output_path_TxIDs, sep = "\n")
