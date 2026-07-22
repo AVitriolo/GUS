@@ -10,6 +10,7 @@ rule merge_CpGs:
     params:
         C = 4,
         j = 1
+    threads: 2
     conda:
         "../envs/r_merge_CpGs.yml"
     log:

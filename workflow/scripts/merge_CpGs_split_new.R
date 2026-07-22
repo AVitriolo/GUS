@@ -42,11 +42,13 @@ coords <- data.frame(chr = chrs, start = starts, end = starts, CpGID = CpGIDs)
 counts <- read.table(input_path_counts, header = TRUE, sep = "\t", row.names = 1, check.names = FALSE)
 expr   <- as.numeric(counts[TxID, ])
 names(expr) <- colnames(counts)
+rm(counts); invisible(gc(verbose = FALSE))
 
 # ---- load methylation matrix from rse for this TxID ----
 rse  <- HDF5Array::loadHDF5SummarizedExperiment(input_path_rse)
 meth <- SummarizedExperiment::assay(rse, "M")
 meth <- as.matrix(meth)
+rm(rse); invisible(gc(verbose = FALSE))
 
 # ---- LEAKAGE-SAFE: the j-term is scored on TRAIN samples only ----
 # mean_abs_cor_expr selects the clustering parameters, so it must not see test
@@ -56,22 +58,61 @@ cat(sprintf("[%s] j-term scored on %d TRAIN samples\n", TxID, length(common_samp
 if (j != 0 && length(common_samples) < 3)
   stop(sprintf("[%s] only %d train samples for the j-term.", TxID, length(common_samples)))
 
+# keep only what the j-term needs, so the big matrix isn't carried into the workers
+meth <- meth[, common_samples, drop = FALSE]
+expr <- expr[common_samples]
+invisible(gc(verbose = FALSE))
+
 # =============================================================================
 # Clustering grid search
 #
-# Same computation as before, reorganised to avoid redundant work:
-#   - find_neighbors() depends only on (coords, i), so it is computed ONCE per
-#     CpG instead of once per (CpG, percentile, flex_point).
-#   - quantile()/diff() depend only on (CpG, percentile), so all flex_points
-#     are read off the SAME sorted diff vector.
-#   - the correlation matrix is used as a matrix, not a data.frame.
-# Results are identical to the nested-loop version.
+# Same computation as the original nested loops, reorganised for speed and
+# memory:
+#   - find_neighbors() depends only on (coords, i)  -> computed ONCE per CpG
+#   - quantile()/diff() depend only on (CpG, percentile) -> all flex_points are
+#     read off the SAME sorted diff vector
+#   - each grid point is SCORED IMMEDIATELY and its igraph object discarded,
+#     so only the cluster lists survive (the previous version held all 300
+#     graphs at once, which is what triggered the OOM kill)
 # =============================================================================
 DC     <- as.matrix(dataset_clustering)
 n_cpg  <- nrow(coords)
 
+cat(sprintf("[%s] %d CpGs, %d grid points\n",
+            TxID, n_cpg, length(percentiles_list) * length(flex_points_list)))
+
 neighbors.spatial.list <- lapply(seq_len(n_cpg), function(i) find_neighbors(coords, i, 1, TRUE))
 row_medians            <- matrixStats::rowMedians(DC)
+
+score_grid_point <- function(clusters, graph, membership, key) {
+    n_clusters    <- length(unique(membership))
+    modularity    <- round(igraph::modularity(graph, membership), 3)
+    fragmentation <- round(n_clusters / igraph::vcount(graph), 3)
+
+    cluster_cors <- sapply(clusters, function(idxs) {
+        cpg_ids <- intersect(coords$CpGID[idxs], rownames(meth))
+        if (length(cpg_ids) == 0) return(NA)
+        cluster_avg <- colMeans(meth[cpg_ids, , drop = FALSE], na.rm = TRUE)
+        suppressWarnings(cor(cluster_avg, expr, method = "spearman", use = "complete.obs"))
+    })
+    mean_abs_cor_expr <- mean(abs(cluster_cors), na.rm = TRUE)
+
+    score <- modularity * (1 - (0.1 * fragmentation)) + j * mean_abs_cor_expr
+
+    list(
+        key      = key,
+        score    = score,
+        clusters = clusters,
+        diag     = data.frame(
+            K                 = key,
+            n_clusters        = n_clusters,
+            modularity        = modularity,
+            fragmentation     = fragmentation,
+            mean_abs_cor_expr = round(mean_abs_cor_expr, 3),
+            score             = round(score, 4)
+        )
+    )
+}
 
 res_by_perc <- parallel::mclapply(
     mc.cores = C,
@@ -89,7 +130,7 @@ res_by_perc <- parallel::mclapply(
             thresholds[i, ] <- d[flex_points_list]
         }
 
-        lapply(seq_along(flex_points_list), function(f) {
+        out <- lapply(seq_along(flex_points_list), function(f) {
             KNN <- lapply(seq_len(n_cpg), function(i) {
                 neighbors.data <- if (is.na(thresholds[i, f])) i else which(DC[i, ] >= thresholds[i, f])
                 ni <- intersect(neighbors.spatial.list[[i]], neighbors.data)
@@ -97,60 +138,33 @@ res_by_perc <- parallel::mclapply(
                 NULL
             })
             names(KNN) <- coords$CpGID
-            connect_KNN_igraph(KNN)
+            r <- connect_KNN_igraph(KNN)
+
+            key <- paste0(percentile_denom, "_", flex_points_list[f])
+            scored <- score_grid_point(r$clusters, r$graph, r$membership, key)
+
+            rm(r, KNN)                       # drop the igraph object immediately
+            scored
         })
+
+        rm(thresholds); invisible(gc(verbose = FALSE))
+        out
     })
 
-# flatten to "<percentile>_<flex_point>" keys
-KNNs_list <- list()
-for (pi in seq_along(percentiles_list)) {
-    for (fi in seq_along(flex_points_list)) {
-        key <- paste0(percentiles_list[pi], "_", flex_points_list[fi])
-        KNNs_list[[key]] <- res_by_perc[[pi]][[fi]]
-    }
-}
+flat <- unlist(res_by_perc, recursive = FALSE)
 rm(res_by_perc); invisible(gc(verbose = FALSE))
 
-# ---- score each grid point ----
-diag_df <- do.call(rbind, lapply(names(KNNs_list), function(k) {
-    r <- KNNs_list[[k]]
+diag_df <- do.call(rbind, lapply(flat, `[[`, "diag"))
 
-    n_edges       <- igraph::ecount(r$graph)
-    n_clusters    <- length(unique(r$membership))
-    modularity    <- round(igraph::modularity(r$graph, r$membership), 3)
-    fragmentation <- round(n_clusters / igraph::vcount(r$graph), 3)
+scores        <- vapply(flat, function(x) x$score, numeric(1))
+best_i        <- which.max(scores)
+best_k        <- flat[[best_i]]$key
+KNN.connected <- flat[[best_i]]$clusters
 
-    clusters <- r$clusters
-    # common_samples is TRAIN-only (defined above)
+cat(sprintf("[%s] best grid point: %s (%d clusters, score %.4f)\n",
+            TxID, best_k, length(KNN.connected), scores[best_i]))
 
-    cluster_cors <- sapply(clusters, function(idxs) {
-        cpg_ids <- coords$CpGID[idxs]
-        cpg_ids <- intersect(cpg_ids, rownames(meth))
-        if (length(cpg_ids) == 0) return(NA)
-        cluster_avg <- colMeans(meth[cpg_ids, common_samples, drop = FALSE], na.rm = TRUE)
-        suppressWarnings(cor(cluster_avg, expr[common_samples], method = "spearman", use = "complete.obs"))
-    })
-
-    mean_abs_cor_expr <- mean(abs(cluster_cors), na.rm = TRUE)
-
-    data.frame(
-        K                 = k,
-        n_edges           = n_edges,
-        n_clusters        = n_clusters,
-        modularity        = modularity,
-        fragmentation     = fragmentation,
-        mean_abs_cor_expr = round(mean_abs_cor_expr, 3)
-    )
-}))
-
-diag_df$score <- diag_df$modularity * (1 - (0.1 * diag_df$fragmentation)) + j * diag_df$mean_abs_cor_expr
-
-best_k   <- diag_df$K[which.max(diag_df$score)]
-best_res <- KNNs_list[[best_k]]
-KNN.connected <- best_res$clusters
-
-cat(sprintf("[%s] best grid point: %s (%d clusters)\n",
-            TxID, best_k, length(KNN.connected)))
+rm(flat, DC, neighbors.spatial.list); invisible(gc(verbose = FALSE))
 
 # ---- assign cluster ids ----
 dataset_clustering[,"cluster_id"] <- NA
@@ -162,6 +176,12 @@ for(idx in seq(KNN.connected)){
     dataset_plotting[idxs, "cluster_id"]   <- names(KNN.connected)[idx]
 }
 
+# ---- write the cluster map FIRST (the heatmap is the memory-hungry part) ----
+clusters_map <- data.frame(CpGID = rownames(dataset_clustering), cluster_id = dataset_clustering$cluster_id)
+write.table(clusters_map, file = output_path_map, row.names = F, col.names = F, quote = F, sep = "\t")
+cat(sprintf("[%s] written: %s\n", TxID, output_path_map))
+
+# ---- heatmap ----
 cluster_id <- dataset_plotting$cluster_id
 
 mat <- as.matrix(dataset_plotting[, colnames(dataset_plotting) != "cluster_id"])
@@ -175,6 +195,8 @@ cluster_id <- as.character(cluster_id)
 
 cluster_levels <- sort(as.numeric(unique(cluster_id)))
 cluster_factor <- factor(cluster_id, levels = cluster_levels)
+
+show_names <- nrow(mat) <= 300      # labels are unreadable and costly beyond this
 
 ha_row <- rowAnnotation(
     cluster = cluster_factor,
@@ -198,8 +220,8 @@ ht <- Heatmap(
     column_split = cluster_factor,
     top_annotation = ha_col,
     left_annotation = ha_row,
-    show_row_names = TRUE,
-    show_column_names = TRUE,
+    show_row_names = show_names,
+    show_column_names = show_names,
     column_names_gp = grid::gpar(fontsize = 4),
     row_names_gp = grid::gpar(fontsize = 4),
     col = col_fun,
@@ -212,7 +234,4 @@ pdf(output_path_plot, width = 10, height = 10)
 draw(ht)
 dev.off()
 
-clusters_map <- data.frame(CpGID = rownames(dataset_clustering), cluster_id = dataset_clustering$cluster_id)
-write.table(clusters_map, file = output_path_map, row.names = F, col.names = F, quote = F, sep = "\t")
-
-cat(sprintf("[%s] written: %s\n", TxID, output_path_map))
+cat(sprintf("[%s] written: %s\n", TxID, output_path_plot))

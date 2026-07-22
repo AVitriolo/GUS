@@ -13,5 +13,6 @@ rule compute_pairwise_correlation:
         Rscript workflow/scripts/compute_pairwise_correlation_split.R \
         --input_path_rse={input.rse} \
         --train_samples={input.train} \
-        --output_path_corr={output.corr} 2> {log}
+        --output_path_corr={output.corr} \
+        --tx_id={wildcards.TxID} 2> {log}
         """

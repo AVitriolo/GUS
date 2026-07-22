@@ -5,7 +5,7 @@ args <- R.utils::commandArgs(trailingOnly = TRUE, asValues = TRUE)
 input_path_rse     <- args$input_path_rse
 train_samples_path <- args$train_samples         
 output_path_corr   <- args$output_path_corr
-
+TxID               <- args$tx_id
 `%>%` <- magrittr::`%>%`
 
 TRAIN <- readLines(train_samples_path)
@@ -30,7 +30,27 @@ cat(sprintf("Samples: %d -> %d train\n", n_before, nrow(meth_t)))
 if (nrow(meth_t) < 3)
   stop(sprintf("Only %d train samples - cannot compute correlations.", nrow(meth_t)))
 
-# order columns by genomic coordinate
+# ---- degenerate case: a single CpG cannot be correlated pairwise ----
+# cor() on a 1-column matrix errors ("non-conformable arrays"). A single CpG
+# trivially forms one cluster, so a 1x1 correlation of 1 is the correct output.
+
+if (ncol(meth_t) < 2) {
+  cat(sprintf("[%s] only %d CpG(s) after train subset - writing trivial 1x1 correlation\n",
+              TxID, ncol(meth_t)))
+  corr <- matrix(1, nrow = ncol(meth_t), ncol = ncol(meth_t),
+                 dimnames = list(colnames(meth_t), colnames(meth_t)))
+  write.table(corr,
+              file      = output_path_corr,
+              col.names = TRUE,
+              row.names = TRUE,
+              quote     = FALSE,
+              sep       = "\t")
+  cat(sprintf("[%s] written %d x %d correlation matrix\n",
+              TxID, nrow(corr), ncol(corr)))
+  quit(save = "no", status = 0)
+}
+
+# order columns by genomic coordinate (only reached when >= 2 CpGs)
 coord_order <- coord_order[coord_order %in% colnames(meth_t)]
 meth_t <- meth_t[, coord_order, drop = FALSE]
 
