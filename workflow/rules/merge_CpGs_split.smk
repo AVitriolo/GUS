@@ -8,7 +8,7 @@ rule merge_CpGs:
         path_counts = counts_train,                                    # <<< train counts
         train       = "resources/split/train_samples.txt"              # <<< NEW
     params:
-        C = 4,
+        C = 3,
         j = 1
     threads: 2
     conda:

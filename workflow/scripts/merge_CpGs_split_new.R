@@ -86,7 +86,9 @@ row_medians            <- matrixStats::rowMedians(DC)
 
 score_grid_point <- function(clusters, graph, membership, key) {
     n_clusters    <- length(unique(membership))
-    modularity    <- round(igraph::modularity(graph, membership), 3)
+    modularity    <- igraph::modularity(graph, membership)
+    if (!is.finite(modularity)) modularity <- 0      # no edges -> undefined
+    modularity    <- round(modularity, 3)
     fragmentation <- round(n_clusters / igraph::vcount(graph), 3)
 
     cluster_cors <- sapply(clusters, function(idxs) {
@@ -96,6 +98,7 @@ score_grid_point <- function(clusters, graph, membership, key) {
         suppressWarnings(cor(cluster_avg, expr, method = "spearman", use = "complete.obs"))
     })
     mean_abs_cor_expr <- mean(abs(cluster_cors), na.rm = TRUE)
+    if (!is.finite(mean_abs_cor_expr)) mean_abs_cor_expr <- 0
 
     score <- modularity * (1 - (0.1 * fragmentation)) + j * mean_abs_cor_expr
 
@@ -156,10 +159,17 @@ rm(res_by_perc); invisible(gc(verbose = FALSE))
 
 diag_df <- do.call(rbind, lapply(flat, `[[`, "diag"))
 
-scores        <- vapply(flat, function(x) x$score, numeric(1))
+scores <- vapply(flat, function(x) {
+    if (is.null(x$score) || !is.finite(x$score)) NA_real_ else x$score
+}, numeric(1))
+
+if (all(is.na(scores)))
+  stop(sprintf("[%s] all %d grid points scored NA.", TxID, length(scores)))
+
 best_i        <- which.max(scores)
 best_k        <- flat[[best_i]]$key
 KNN.connected <- flat[[best_i]]$clusters
+
 
 cat(sprintf("[%s] best grid point: %s (%d clusters, score %.4f)\n",
             TxID, best_k, length(KNN.connected), scores[best_i]))
