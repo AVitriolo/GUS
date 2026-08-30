@@ -1,5 +1,5 @@
 source("workflow/scripts/helpers/find_neighbors.R")
-source("workflow/scripts/helpers/connect_KNN_igraph_new.R")
+source("workflow/scripts/helpers/connect_KNN_igraph.R")
 
 options(scipen=999)
 
@@ -25,9 +25,9 @@ dir.create(dirname(output_path_plot), recursive = TRUE, showWarnings = FALSE)
 parts <- unlist(strsplit(basename(input_path), split = "_"))
 TxID <- parts[length(parts)]
 
-# Go straight to the abs matrix used for clustering and drop the data.frame
-# immediately -- avoids holding dataset / dataset_clustering / DC as three
-# separate n_cpg x n_cpg objects at once.
+# CHANGE: go straight to the abs matrix used for clustering and drop the
+# data.frame immediately. We no longer keep dataset / dataset_clustering /
+# DC as three separate n_cpg x n_cpg objects at once -- just DC.
 dataset <- read.delim(input_path, check.names = FALSE, header = TRUE, sep = "\t")
 DC <- abs(as.matrix(dataset))
 rm(dataset); invisible(gc(verbose = FALSE))
@@ -45,9 +45,10 @@ names(expr) <- colnames(counts)
 rm(counts); invisible(gc(verbose = FALSE))
 
 # ---- load methylation matrix from rse for this TxID ----
-# Subset the SummarizedExperiment BEFORE materializing to a dense matrix, so
-# as.matrix() only reads the TRAIN columns off HDF5 instead of loading every
-# sample and immediately discarding most of them.
+# CHANGE: compute common_samples against the rse's colnames (lazy, doesn't
+# touch data) and subset the SummarizedExperiment BEFORE materializing to a
+# dense matrix, so as.matrix() only ever reads the TRAIN columns off HDF5
+# instead of loading every sample and immediately discarding most of them.
 rse <- HDF5Array::loadHDF5SummarizedExperiment(input_path_rse)
 
 # LEAKAGE-SAFE: the j-term is scored on TRAIN samples only.
@@ -65,6 +66,14 @@ invisible(gc(verbose = FALSE))
 
 # =============================================================================
 # Clustering grid search
+#
+# Same computation as the original nested loops, reorganised for speed and
+# memory:
+#   - find_neighbors() depends only on (coords, i)  -> computed ONCE per CpG
+#   - quantile()/diff() depend only on (CpG, percentile) -> all flex_points are
+#     read off the SAME sorted diff vector
+#   - each grid point is SCORED IMMEDIATELY and its igraph object discarded,
+#     so only the cluster lists survive
 # =============================================================================
 n_cpg  <- nrow(coords)
 
@@ -78,14 +87,23 @@ neighbors.spatial.list <- lapply(seq_len(n_cpg), function(i) find_neighbors(coor
 row_medians            <- matrixStats::rowMedians(DC)
 
 # ---- presort each row of DC ONCE ----------------------------------------
-# quantile(DC[i, ], probs) used to re-sort row i from scratch, once per
-# percentile_denom (up to 100x per row). The threshold itself is still
-# derived from the FULL row of correlations -- this only avoids re-sorting
-# the same fixed values repeatedly.
-cat(sprintf("[%s] presorting %d rows...\n", TxID, n_cpg))
-row_sorted_asc <- vector("list", n_cpg)
+# Previously: quantile(DC[i, ], probs) re-sorts row i from scratch, once per
+# percentile_denom -> up to 100 redundant sorts of the same row. And
+# which(DC[i, ] >= threshold) does a fresh O(n_cpg) scan for every one of the
+# 300 grid points. Both only ever need the row's sort order, which is fixed.
+# Sorting all rows once here and reusing that turns:
+#   - threshold computation from O(100 * n_cpg^2 log n_cpg) into O(n_cpg^2 log n_cpg)
+#   - neighbor lookup from O(300 * n_cpg^2) into O(n_cpg^2 log n_cpg) + O(300 * n_cpg log n_cpg)
+# Trade-off: this holds two extra n_cpg x n_cpg-sized objects (order indices
+# + sorted values) alongside DC for the duration of the grid search --
+# roughly another ~1.5x DC's memory footprint. If that's tight for your
+# largest transcripts, drop C for this rule rather than skip this section.
+row_order_desc <- vector("list", n_cpg)   # indices, DC value descending
+row_sorted_asc <- vector("list", n_cpg)   # DC values, ascending (for quantile)
 for (i in seq_len(n_cpg)) {
-    row_sorted_asc[[i]] <- sort(DC[i, ])
+    ord <- order(DC[i, ], decreasing = TRUE)
+    row_order_desc[[i]] <- ord
+    row_sorted_asc[[i]] <- rev(DC[i, ord])
 }
 
 # stats::quantile(x, probs) with default type-7 interpolation, computed
@@ -105,7 +123,6 @@ score_grid_point <- function(clusters, graph, membership, key) {
     modularity    <- round(modularity, 3)
     fragmentation <- round(n_clusters / igraph::vcount(graph), 3)
 
-    # ---- vectorized cluster-mean correlation, built off `clusters` (not `membership`) ----
     cluster_id_of <- rep(seq_along(clusters), times = lengths(clusters))
     cpg_of_cluster <- coords$CpGID[unlist(clusters)]
 
@@ -148,11 +165,8 @@ res_by_perc <- parallel::mclapply(
     X = percentiles_list,
     FUN = function(percentile_denom) {
 
-        t0 <- Sys.time()
         probs <- seq(0, 1, (1/percentile_denom))
 
-        # thresholds[i, f] : flex threshold for CpG i at flex_point f
-        # NA marks the "singleton" case (|median| < 0.1)
         thresholds <- matrix(NA_real_, nrow = n_cpg, ncol = length(flex_points_list))
         for (i in seq_len(n_cpg)) {
             if (abs(row_medians[i]) < 0.1) next
@@ -162,16 +176,19 @@ res_by_perc <- parallel::mclapply(
         }
 
         out <- lapply(seq_along(flex_points_list), function(f) {
-            t_knn0 <- Sys.time()
             KNN <- lapply(seq_len(n_cpg), function(i) {
-                if (is.na(thresholds[i, f])) return(i)
-                spatial_idx <- neighbors.spatial.list[[i]]
-                ni <- spatial_idx[DC[i, spatial_idx] >= thresholds[i, f]]
+                if (is.na(thresholds[i, f])) return(setNames(list(i), NULL)[[1]])
+                thr <- thresholds[i, f]
+                # count of values > thr via binary search on the ascending
+                # sorted row, then slice that many indices off the
+                # descending order -- replaces the O(n_cpg) which() scan
+                n_above <- n_cpg - findInterval(thr, row_sorted_asc[[i]])
+                neighbors.data <- if (n_above > 0) row_order_desc[[i]][seq_len(n_above)] else integer(0)
+                ni <- intersect(neighbors.spatial.list[[i]], neighbors.data)
                 if (length(ni) > 0) return(ni)
                 NULL
             })
             names(KNN) <- coords$CpGID
-
             r <- connect_KNN_igraph(KNN)
 
             key <- paste0(percentile_denom, "_", flex_points_list[f])
@@ -181,12 +198,6 @@ res_by_perc <- parallel::mclapply(
             scored
         })
 
-        # No gc() here. This runs inside a forked child -- gc() walks the
-        # whole heap and touches refcounts on DC/meth/neighbors.spatial.list/
-        # row_sorted_asc, which breaks copy-on-write sharing with the parent
-        # and can cause each of the C children to end up holding its own
-        # copy of those objects. The child's memory (including `thresholds`)
-        # is reclaimed by the OS when it exits right after this.
         rm(thresholds)
         out
     })
@@ -221,9 +232,11 @@ KNN.connected <- flat[[best_i]]$clusters
 cat(sprintf("[%s] best grid point: %s (%d clusters, score %.4f)\n",
             TxID, best_k, length(KNN.connected), scores[best_i]))
 
-rm(flat, neighbors.spatial.list, row_sorted_asc); invisible(gc(verbose = FALSE))
+rm(flat, neighbors.spatial.list); invisible(gc(verbose = FALSE))
 
 # ---- assign cluster ids ----
+# CHANGE: we only ever needed rownames(DC) + a cluster label per CpG here --
+# no need to carry a whole abs-value data.frame just to attach one column.
 cluster_id_vec <- setNames(rep(NA_character_, n_cpg), rownames(DC))
 for (idx in seq_along(KNN.connected)) {
     idxs <- KNN.connected[[idx]]
@@ -237,11 +250,12 @@ cat(sprintf("[%s] written: %s\n", TxID, output_path_map))
 
 rm(DC); invisible(gc(verbose = FALSE))
 
-
 # ---- heatmap ----
-# Re-read the signed matrix here instead of holding a dataset_plotting copy
-# alongside DC for the whole script -- this is the only point that needs
-# signed values (for the blue/white/red color scale).
+# CHANGE: re-read the (signed) matrix here instead of holding a
+# dataset_plotting copy alongside DC for the whole script. This is the only
+# point that needs signed values (for the blue/white/red color scale) --
+# the cheap I/O here is a good trade for not carrying an extra n_cpg x n_cpg
+# matrix through the entire grid search.
 dataset_plotting <- read.delim(input_path, check.names = FALSE, header = TRUE, sep = "\t")
 dataset_plotting$cluster_id <- cluster_id_vec[rownames(dataset_plotting)]
 
@@ -261,76 +275,40 @@ cluster_factor <- factor(cluster_id, levels = cluster_levels)
 
 show_names <- nrow(mat) <= 300      # labels are unreadable and costly beyond this
 
+ha_row <- rowAnnotation(
+    cluster = cluster_factor,
+    col = list(cluster = structure(rainbow(length(unique(cluster_factor))), names = levels(cluster_factor))),
+    show_legend = FALSE
+)
+
+ha_col <- HeatmapAnnotation(
+    cluster = cluster_factor,
+    col = list(cluster = structure(rainbow(length(unique(cluster_factor))), names = levels(cluster_factor)))
+)
+
 col_fun <- circlize::colorRamp2(c(-1, 0, 1), c("blue", "white", "red"))
 
-# ---- guard: skip the split layout when there's essentially no clustering ----
-# row_split/column_split make ComplexHeatmap lay out a separate bordered
-# sub-block per group. With near-singleton clustering (n_clusters close to
-# n_cpg), that's ~1 gap per row -- a pathological case that can take a very
-# long time to render and isn't visually interpretable anyway. Fall back to
-# a single unsplit heatmap in that case; MAX_CLUSTERS_FOR_SPLIT is a rough
-# threshold, tune it to whatever's still readable for your purposes.
-MAX_CLUSTERS_FOR_SPLIT <- 500
-n_final_clusters <- length(unique(cluster_id))
+ht <- Heatmap(
+    mat,
+    name = "Correlation",
+    cluster_rows = FALSE,
+    cluster_columns = FALSE,
+    row_split = cluster_factor,
+    column_split = cluster_factor,
+    top_annotation = ha_col,
+    left_annotation = ha_row,
+    show_row_names = show_names,
+    show_column_names = show_names,
+    column_names_gp = grid::gpar(fontsize = 4),
+    row_names_gp = grid::gpar(fontsize = 4),
+    col = col_fun,
+    border = TRUE,
+    row_title_rot = 90,
+    column_title_rot = 90
+)
 
-cat(sprintf("[%s] %d clusters over %d CpGs -- building heatmap...\n",
-            TxID, n_final_clusters, nrow(mat)))
-
-if (nrow(mat) < 2) {
-    cat(sprintf("[%s] %d CpG(s) - skipping heatmap (nothing to cluster visually)\n",
-                TxID, nrow(mat)))
-    pdf(output_path_plot); plot.new()
-    text(0.5, 0.5, sprintf("%d CpG(s) - no heatmap", nrow(mat))); dev.off()
-
-} else {
-    if (n_final_clusters > MAX_CLUSTERS_FOR_SPLIT) {
-        cat(sprintf("[%s] %d clusters exceeds MAX_CLUSTERS_FOR_SPLIT=%d -- skipping split layout, plotting unsplit matrix\n",
-                    TxID, n_final_clusters, MAX_CLUSTERS_FOR_SPLIT))
-        ht <- Heatmap(
-            mat,
-            name = "Correlation",
-            cluster_rows = FALSE,
-            cluster_columns = FALSE,
-            show_row_names = FALSE,
-            show_column_names = FALSE,
-            col = col_fun,
-            border = TRUE
-        )
-    } else {
-        ha_row <- rowAnnotation(
-            cluster = cluster_factor,
-            col = list(cluster = structure(rainbow(length(unique(cluster_factor))), names = levels(cluster_factor))),
-            show_legend = FALSE
-        )
-
-        ha_col <- HeatmapAnnotation(
-            cluster = cluster_factor,
-            col = list(cluster = structure(rainbow(length(unique(cluster_factor))), names = levels(cluster_factor)))
-        )
-
-        ht <- Heatmap(
-            mat,
-            name = "Correlation",
-            cluster_rows = FALSE,
-            cluster_columns = FALSE,
-            row_split = cluster_factor,
-            column_split = cluster_factor,
-            top_annotation = ha_col,
-            left_annotation = ha_row,
-            show_row_names = show_names,
-            show_column_names = show_names,
-            column_names_gp = grid::gpar(fontsize = 4),
-            row_names_gp = grid::gpar(fontsize = 4),
-            col = col_fun,
-            border = TRUE,
-            row_title_rot = 90,
-            column_title_rot = 90
-        )
-    }
-
-    pdf(output_path_plot, width = 10, height = 10)
-    draw(ht)
-    dev.off()
-}
+pdf(output_path_plot, width = 10, height = 10)
+draw(ht)
+dev.off()
 
 cat(sprintf("[%s] written: %s\n", TxID, output_path_plot))

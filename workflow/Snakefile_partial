@@ -1,5 +1,4 @@
 configfile: "config/config_NTM.yaml"
-print(config.keys())
 assembly_codes   = config["assembly_codes"]
 gencode_versions = config["gencode_versions"]
 tss_subsets      = config["tss_subsets"]
@@ -278,6 +277,39 @@ rule all:
             minCount_expr=minCount_exprs,
             minSamples_expr=minSamples_exprs,
             CV=CVs
+        ),
+        expand(
+            "data/to_methyldriver/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed",
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+         expand(
+            "data/to_methyldriver/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv",
+            comparison=list(config["delta_comparisons"].keys()),
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+        expand(
+            "results/methyldriver/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
+            comparison=list(config["delta_comparisons"].keys()),
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+        expand(
+            "results/methyldriver/volcano_{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.pdf",
+            comparison=list(config["delta_comparisons"].keys()),
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+        expand(
+            "results/gimme/scan_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv",
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
         )
 
 rule all_unpack_topK_NTM:
@@ -366,6 +398,11 @@ include: "rules/batch_correct_rna.smk"
 include: "rules/export_wgbs_samples.smk"
 include: "rules/batch_correct_meth.smk"
 include: "rules/export_meth_metadata.smk"
+include: "rules/selected_features_to_bed.smk"
+include: "rules/cluster_delta_methylation.smk"
+include: "rules/run_methyldriver.smk"
+include: "rules/gimme_scan.smk"
+
 
 wildcard_constraints:
     assembly_code="hg\\d{2}",
@@ -384,4 +421,4 @@ wildcard_constraints:
     K_closest="[0-9]+",
     CV="[0-9]+",
     test_size="\\d+(\\.\\d+)?",
-
+    comparison="|".join(config["delta_comparisons"].keys()),

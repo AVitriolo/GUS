@@ -1,0 +1,19 @@
+name: r_methyldriver
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base
+  - r-rann                        
+  - r-dplyr                       
+  - r-data.table                  
+  - r-foreach                     
+  - r-ggrepel
+  - r-r.utils                     
+  - r-httr                        
+  - r-jsonlite 
+  - r-ggplot2    
+  - bioconductor-genomicranges   
+  - bioconductor-s4vectors       
+  - ucsc-bigwigaverageoverbed    

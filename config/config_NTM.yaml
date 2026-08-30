@@ -141,3 +141,22 @@ check_sv_stability:
 
 batch_correction_meth:
   - 1
+
+delta_comparisons:
+  N_vs_T:       { cond_1: N, cond_2: T }
+  T_vs_D:       { cond_1: T, cond_2: D }
+  T_vs_D_Bone:  { cond_1: T, cond_2: D, site_2: Bone }
+  T_vs_D_Liver: { cond_1: T, cond_2: D, site_2: Liver }
+  T_vs_D_Lymph: { cond_1: T, cond_2: D, site_2: Lymph_node }
+  N_vs_D:       { cond_1: N, cond_2: D }
+  N_vs_D_Bone:  { cond_1: N, cond_2: D, site_2: Bone }
+  N_vs_D_Liver: { cond_1: N, cond_2: D, site_2: Liver }
+  N_vs_D_Lymph: { cond_1: N, cond_2: D, site_2: Lymph_node }
+
+encode_bigwig_dir: resources/roadmap/hg38_files
+
+conversion_table:  resources/conversion_table_gencodeV38.tsv
+
+clusters_to_keep:  ""          # optional: path to a cluster-ID list for methyldriver, or "" to use all
+
+gimme_subset: ""
