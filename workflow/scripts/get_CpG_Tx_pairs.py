@@ -12,7 +12,7 @@ selectedfol = args.input_dir_selected_CpGs
 allfiles = os.listdir(selectedfol)
 
 # take genes from last chunk of file name
-genes = [x.split("_")[15] for x in allfiles]
+genes = [x.split("_")[-1] for x in allfiles]
 
 cpgbygenetable = list() # empty list
 

@@ -157,6 +157,6 @@ encode_bigwig_dir: resources/roadmap/hg38_files
 
 conversion_table:  resources/conversion_table_gencodeV38.tsv
 
-clusters_to_keep:  ""          # optional: path to a cluster-ID list for methyldriver, or "" to use all
+clusters_to_keep:  "resources/clusters_top_cvr2.txt"          # optional: path to a cluster-ID list for methyldriver, or "" to use all
 
-gimme_subset: ""
+gimme_subset: "resources/clusters_top_cvr2.txt"

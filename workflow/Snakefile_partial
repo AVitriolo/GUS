@@ -400,6 +400,7 @@ include: "rules/batch_correct_meth.smk"
 include: "rules/export_meth_metadata.smk"
 include: "rules/selected_features_to_bed.smk"
 include: "rules/cluster_delta_methylation.smk"
+include: "rules/methyldriver_neighbors.smk"
 include: "rules/run_methyldriver.smk"
 include: "rules/gimme_scan.smk"
 
