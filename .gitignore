@@ -19,3 +19,8 @@ logs_NTM*/
 results_NTM*/
 diagnostics/
 
+archive/
+analyses/tools/
+analyses/tcga_meteor_pancancer/resources/
+__pycache__/
+*.pyc

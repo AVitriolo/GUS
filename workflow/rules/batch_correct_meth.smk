@@ -18,7 +18,7 @@ rule batch_correct_meth:
         "logs/batch_correct/meth_combat.log"
     shell:
         """
-        PYTHONPATH=workflow/scripts/helpers python workflow/scripts/combat_correction_meth.py \
+        PYTHONPATH=workflow/scripts/helpers python workflow/scripts/combat_correction_meth_beta.py \
         --in_h5={input.h5} \
         --in_rowranges={input.meta_rr} \
         --in_coldata={input.meta_cd} \

@@ -1,9 +1,9 @@
 rule methyldriver_neighbors:            # runs ONCE
     output:
-        neighbors = "results/methyldriver/neighbors_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
-        matrix    = "results/methyldriver/featmatrix_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds"
+        neighbors = "results/methyldriver" + TAG + "/neighbors_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
+        matrix    = "results/methyldriver" + TAG + "/featmatrix_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds"
     input:
-        bed = "data/to_methyldriver/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed"
+        bed = "data/to_methyldriver" + TAG + "/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed"
     params:
         bigwig_dir    = config["encode_bigwig_dir"],
         exclude_files = "ENCFF582VMO.bigWig,ENCFF582VMO.bigWig.1",

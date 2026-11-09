@@ -1,0 +1,10 @@
+# R environment for the stability-selection summary (slurm/stability_summary.sbatch):
+# Nogueira stability index (stabm) and the complementary-pairs PFER bound (stabs).
+name: meteor_stability
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.3
+  - r-stabm
+  - r-stabs
+  - r-data.table

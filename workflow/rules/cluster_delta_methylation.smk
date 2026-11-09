@@ -1,9 +1,9 @@
 rule cluster_delta_methylation:
     output:
-        tsv = "data/to_methyldriver/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
+        tsv = "data/to_methyldriver" + TAG + "/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
     input:
         h5  = integrated_h5,
-        bed = "data/to_methyldriver/selected_features_percpg_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed"
+        bed = "data/to_methyldriver" + TAG + "/selected_features_percpg_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed"
     params:
         cond_1 = lambda wc: config["delta_comparisons"][wc.comparison]["cond_1"],
         cond_2 = lambda wc: config["delta_comparisons"][wc.comparison]["cond_2"],

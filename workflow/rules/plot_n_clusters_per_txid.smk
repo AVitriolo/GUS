@@ -1,10 +1,10 @@
 rule plot_n_clusters_per_txid:
     output:
-        "results/plots/clustering/n_clusters_per_txid/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}.pdf"
+        "results/plots/clustering" + TAG + "/n_clusters_per_txid/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}.pdf"
     input:
         get_txid_merge_CpGs_NTM
     params:
-        input_dir = "data/clustering/clusters_maps"
+        input_dir = "data/clustering/clusters_maps" + TAG
     conda:
         "../envs/r_merge_CpGs.yml"
     log:

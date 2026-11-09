@@ -1,12 +1,12 @@
 rule methyldriver:                      # runs PER comparison, cheap
     output:
-        results    = "results/methyldriver/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
-        volcano    = "results/methyldriver/volcano_{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.pdf",
-        full_table = "results/methyldriver/full_{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
+        results    = "results/methyldriver" + TAG + "/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
+        volcano    = "results/methyldriver" + TAG + "/volcano_{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.pdf",
+        full_table = "results/methyldriver" + TAG + "/full_{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
     input:
-        neighbors = "results/methyldriver/neighbors_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
-        matrix    = "results/methyldriver/featmatrix_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
-        meth_diff = "data/to_methyldriver/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
+        neighbors = "results/methyldriver" + TAG + "/neighbors_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
+        matrix    = "results/methyldriver" + TAG + "/featmatrix_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
+        meth_diff = "data/to_methyldriver" + TAG + "/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
     params:
         conversion_table = config["conversion_table"], q = 0.05
     conda: "../envs/r_methyldriver.yml"

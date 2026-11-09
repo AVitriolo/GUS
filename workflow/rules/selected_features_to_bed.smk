@@ -1,12 +1,12 @@
 rule selected_features_to_bed:
     output:
-        bed_span   = "data/to_methyldriver/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed",
-        bed_percpg = "data/to_methyldriver/selected_features_percpg_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed"
+        bed_span   = "data/to_methyldriver" + TAG + "/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed",
+        bed_percpg = "data/to_methyldriver" + TAG + "/selected_features_percpg_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed"
     input:
-        sel_check = "results/checks/model_selection/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}"
+        sel_check = "results/checks/model_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}"
     params:
-        sel_feats_dir = "results/sel_feats",
-        map_dir       = "data/clustering/clusters_maps"
+        sel_feats_dir = "results/sel_feats" + TAG,
+        map_dir       = "data/clustering/clusters_maps" + TAG
     conda:
         "../envs/r_merge_CpGs.yml"
     log:

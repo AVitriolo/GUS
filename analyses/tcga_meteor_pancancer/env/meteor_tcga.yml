@@ -1,0 +1,30 @@
+# Conda environment for the per-cancer METEOR TCGA pipeline (same packages as gus_tcga.yml, plus what the
+# repeated-CV / k-capped model script needs: xgboost and shap are imported by its helpers).
+name: meteor_tcga
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - pandas
+  - numpy
+  - scipy
+  - scikit-learn
+  - scikit-optimize
+  - xgboost
+  - joblib
+  - matplotlib
+  - tqdm
+  - pyyaml
+  - r-base
+  - r-data.table
+  - r-r.utils
+  - r-dplyr
+  - r-ucscxenatools
+  - bioconductor-remp
+  - bioconductor-genomicranges
+  - bioconductor-illuminahumanmethylation450kanno.ilmn12.hg19
+  - pip
+  - pip:
+      - shap

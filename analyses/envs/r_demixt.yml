@@ -1,0 +1,22 @@
+name: r_demixt
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.3
+  - r-r.utils
+  - r-data.table
+  - bioconductor-summarizedexperiment
+  - bioconductor-dss
+  - bioconductor-sva
+  - r-fitdistrplus
+  - r-pbapply
+  - r-truncdist
+  - r-matrixcalc
+  - r-dendextend
+  - r-kernsmooth
+  - compilers
+  # DeMixT >= 2.0.0 is installed from GitHub after env creation (1.16.0 on
+  # bioconda has a broken DeMixT_preprocessing):
+  #   git clone https://github.com/wwylab/DeMixT.git && R CMD INSTALL DeMixT

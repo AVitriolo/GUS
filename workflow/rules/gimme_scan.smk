@@ -1,8 +1,8 @@
 rule gimme_scan:
     output:
-        scan = "results/gimme/scan_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
+        scan = "results/gimme" + TAG + "/scan_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv"
     input:
-        bed         = "data/to_methyldriver/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed",
+        bed         = "data/to_methyldriver" + TAG + "/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed",
         chrom_sizes = "resources/reference_data/hg38.chrom.sizes"
     params:
         genome  = "GRCh38.p14",

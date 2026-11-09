@@ -69,10 +69,15 @@ make_feature_matrix_from_bigwigs_and_bed = function(bigwig_dir, genomic_regions_
   result_files <- file.path(temp_dir, average_over_bed_file_names)
   row_counts <- sapply(result_files, function(f) nrow(data.table::fread(f, header=FALSE)))
   print(row_counts)
-  # Create a matrix with rows corresponding to genomic regions and columns corresponding to genomic features
+  # Create a matrix with rows corresponding to genomic regions and columns corresponding to genomic features.
+  # bigWigAverageOverBed writes its rows in its own chromosome order, not the BED order: match them by region
+  # name (column 1), so each row gets its own region's values
   genomic_regions_chromatin_feature_matrix = as.matrix(foreach::foreach(result_file =
                                                                           result_files, .combine = "cbind") %do% {
-                                                                            data.table::fread(result_file, sep = "\t", header = F, select = mean_col)
+                                                                            d = data.table::fread(result_file, sep = "\t", header = F, select = c(1, mean_col))
+                                                                            i = match(region_names, d[[1]])
+                                                                            if (anyNA(i)) stop(sprintf("%s: %d regions missing", basename(result_file), sum(is.na(i))))
+                                                                            d[[2]][i]
                                                                           })
   # Assign the genomic region names as rownames of the matrix and the feature names as its column names
   rownames(genomic_regions_chromatin_feature_matrix) = region_names

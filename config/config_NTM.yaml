@@ -11,7 +11,7 @@ sample_types:
  - NTM
  
 distances:
- - 50000
+ - 1000000           # candidate CpGs within +-1 Mb of the TSS
 
 slop_distances_TSS:
  - 100000
@@ -82,11 +82,44 @@ test_sizes:
 CVs:
   - 3
 
+n_repeats:
+  - 5                 # RepeatedKFold: CVs folds x n_repeats (model_selection_split_kbest_repeated_kcapped.py)
+
+# ---- modelling level and CpG clustering ----
+level: transcript     # transcript: one model per selected TxID, transcript counts
+                      # gene: one model per gene, on its representative TxID (build_genelevel_counts.py), gene counts
+skip_shap: 0          # 0: compute SHAP values; 1: skip them (the shap file is written with NaN)
+cluster_cpgs: 0       # 1: cluster co-methylated CpGs (compute_pairwise_correlation + merge_CpGs); 0: every CpG is a feature
+
 cpgea_wgbs_location:
-  - "resources/cpgea_wgbs_with_coverage_hg38"
+  - "resources/cpgea_wgbs_merged_hg38"     # .stat values + read counts, gaps filled from WGBS.CG (build_cpgea_merged_se.R)
 
 mcrpc_wgbs_location:
   - "resources/mcrpc_wgbs_hg38"
+
+pames_min_cov:
+  - 10
+
+pames_min_sample_frac:
+  - 1.0
+
+pames_min_mean_diff:
+  - 0.3
+
+pames_max_na_data:
+  - 0
+
+pames_percentile_low:
+  - 5
+
+pames_percentile_high:
+  - 95
+
+pames_max_sites:
+  - 20
+
+pames_min_distance:
+  - 1000000
 
 RNA_counts_locations_NT:
   - "resources/RNA/kallisto_counts_NT.tsv"

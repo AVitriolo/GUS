@@ -1,10 +1,10 @@
 rule xgb_input_clustered_split:
     output:
-        train = "data/xgb_clustered/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered_train.txt",
-        test  = "data/xgb_clustered/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered_test.txt"
+        train = "data/xgb_clustered" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered_train.txt",
+        test  = "data/xgb_clustered" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered_test.txt"
     input:
         rse          = "data/rse_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}",
-        mapping      = "data/clustering/clusters_maps/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_clusters_map.txt",
+        mapping      = "data/clustering/clusters_maps" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_clusters_map.txt",
         counts_train = counts_train,
         counts_test  = counts_test,
         train        = "resources/split/train_samples.txt",

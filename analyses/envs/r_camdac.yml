@@ -1,0 +1,32 @@
+name: r_camdac
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.3
+  - r-r.utils
+  - r-readxl
+  - r-data.table
+  - r-remotes
+  - r-devtools
+  - r-optparse
+  - r-logger
+  - r-stringr
+  - r-scales
+  - r-ggplot2
+  - r-gridextra
+  - r-gtable
+  - r-readr
+  - r-dplyr
+  - r-doparallel
+  - r-fst
+  - r-fs
+  - r-png
+  - bioconductor-genomicranges
+  - bioconductor-genomicalignments
+  - bioconductor-rsamtools
+  - bioconductor-rhdf5
+  - bioconductor-hdf5array
+  # CAMDAC + its ASCAT fork are GitHub-only, installed after env creation:
+  #   Rscript -e 'remotes::install_github("VanLoo-Lab/ascat/ASCAT@v3.2.0"); remotes::install_github("VanLoo-lab/CAMDAC")'

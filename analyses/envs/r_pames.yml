@@ -1,0 +1,18 @@
+name: r_pames
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.5
+  - r-essentials
+  - r-r.utils
+  - r-assertthat
+  - r-remotes
+  - bioconductor-summarizedexperiment
+  - bioconductor-hdf5array
+  - bioconductor-genomicranges
+  - bioconductor-iranges
+  - bioconductor-s4vectors
+  - bioconductor-delayedmatrixstats
+  - r-data.table

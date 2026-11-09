@@ -15,7 +15,7 @@ rule integrate_datasets:
         "logs/integrate_datasets/integrate_datasets.log"
     shell:
         """
-        Rscript workflow/scripts/dataset_integration_split.R \
+        Rscript workflow/scripts/dataset_integration_split_merged_v2.R \
         --cpgea={input.cpgea} \
         --mcrpc={input.mcrpc} \
         --train_samples={input.train} \

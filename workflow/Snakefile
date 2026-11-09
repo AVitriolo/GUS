@@ -1,450 +1,437 @@
-import os
-from snakemake.io import expand
-from scripts.helpers.send_email import send_email
+configfile: "config/config_NTM.yaml"
+assembly_codes   = config["assembly_codes"]
+gencode_versions = config["gencode_versions"]
+tss_subsets      = config["tss_subsets"]
+sample_types     = config["sample_types"]
+distances        = config["distances"]
+min_CpGs         = config["min_CpGs"]
+K_closests       = config["K_closests"]
+leftCount_betas  = config["leftCount_betas"]
+rightCount_betas = config["rightCount_betas"]
+minCount_exprs   = config["minCount_exprs"]
+minSamples_betas = config["minSamples_betas"]
+minCovs          = config["minCovs"]
+minSamples_exprs = config["minSamples_exprs"]
+test_sizes = config["test_sizes"]
+CVs        = config["CVs"]
 
-def txids_from_checkpoint_second_round(wildcards):
-    """Return list of TxIDs from checkpoint output (cached)."""
-    chk_output = checkpoints.filter_selected_TxIDs_second_round.get(
-        assembly_code=wildcards.assembly_code,
-        gencode_version=wildcards.gencode_version,
-        tss_subset=wildcards.tss_subset,
-        distance=wildcards.distance,
-        min_CpG = wildcards.min_CpG,
-        minCount_expr=wildcards.minCount_expr,
-        minSamples_expr=wildcards.minSamples_expr,
-        K_closest=wildcards.K_closest
-    ).output[0]
+
+BC_RNA = int(config["batch_correction_rna"][0])
+BC_METH = int(config["batch_correction_meth"][0])
+
+# modelling level (transcript | gene) and CpG clustering (1 | 0); TAG keeps the runs apart in the
+# expression-dependent folders: transcript + clustering = the original paths, "_gene" / "_noclust" otherwise
+LEVEL   = config.get("level", "transcript")
+CLUSTER = int(config.get("cluster_cpgs", 1))
+assert LEVEL in ("transcript", "gene"), "config level must be transcript or gene"
+TAG = ("_gene" if LEVEL == "gene" else "") + ("" if CLUSTER else "_noclust")
+
+def txids_from_checkpoint_second_round_NTM(wildcards):
+    chk_output = checkpoints.filter_selected_TxIDs_second_round_NTM.get(
+        assembly_code   = wildcards.assembly_code,
+        gencode_version = wildcards.gencode_version,
+        tss_subset      = wildcards.tss_subset,
+        distance        = wildcards.distance,
+        minCount_expr   = wildcards.minCount_expr,
+        minSamples_expr = wildcards.minSamples_expr
+    ).output.ff_selected_TxIDs
 
     with open(chk_output) as f:
-        return [x.strip() for x in f]
+        txids = [x.strip() for x in f]
+    if LEVEL == "gene":                      # one model per gene, on its representative TxID
+        rep_path = checkpoints.build_genelevel_counts.get(
+            assembly_code   = wildcards.assembly_code,
+            gencode_version = wildcards.gencode_version,
+            tss_subset      = wildcards.tss_subset,
+            distance        = wildcards.distance,
+            minCount_expr   = wildcards.minCount_expr,
+            minSamples_expr = wildcards.minSamples_expr
+        ).output.representative
+        with open(rep_path) as f:
+            keep = {l.split("\t")[0] for l in f if not l.startswith("TxID")}
+        txids = [t for t in txids if t in keep]
+    return txids
 
-def txids_from_checkpoint_third_round(wildcards):
-    """Return list of TxIDs from checkpoint output (cached)."""
-    chk_output = checkpoints.filter_selected_TxIDs_third_round.get(
-        assembly_code=wildcards.assembly_code,
-        gencode_version=wildcards.gencode_version,
-        tss_subset=wildcards.tss_subset,
-        distance=wildcards.distance,
-        min_CpG = wildcards.min_CpG,
-        minCount_expr=wildcards.minCount_expr,
-        minSamples_expr=wildcards.minSamples_expr,
-        K_closest=wildcards.K_closest,
-        sample_type=wildcards.sample_type,
-        leftCount_beta=wildcards.leftCount_beta,
-        rightCount_beta=wildcards.rightCount_beta,
-        minSamples_beta=wildcards.minSamples_beta,
-        minCov=wildcards.minCov
+def get_txid_unpack_topK_NTM(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "resources/CpG_data/top_K/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}.bed",
+        TxID=txids, **wildcards
+    )
 
-    ).output[0]
+def get_txid_unpack_RSE_NTM(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "data/rse_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}",
+        TxID=txids, **wildcards
+    )
 
-    with open(chk_output) as f:
-        return [x.strip() for x in f]
+def get_txid_compute_pairwise_correlation(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "data/corr_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}",
+        TxID=txids, **wildcards
+    )
 
-def get_txid_unpack_topK(wildcards):
-    txids = txids_from_checkpoint_second_round(wildcards)
-    return expand(rules.unpack_topK.output[0], TxID=txids, **wildcards)
+def get_txid_merge_CpGs_NTM(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "data/clustering/clusters_maps" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_clusters_map.txt",
+        TxID=txids, **wildcards
+    )
 
-def get_txid_unpack_rse(wildcards):
-    txids = txids_from_checkpoint_second_round(wildcards)
-    return expand(rules.unpack_RSE.output[0], TxID=txids, **wildcards)
+def get_txid_model_selection(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "results/hyper" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}_{TxID}",
+        TxID=txids, **wildcards
+    )
 
-def get_txid_xgb_input(wildcards):
-    txids = txids_from_checkpoint_second_round(wildcards)
-    return expand(rules.xgb_input.output[0], TxID=txids, **wildcards)
+def counts_train(wc):
+    sfx = "_combat" if BC_RNA else ""
+    lv  = "genelevel/genelevel_" if LEVEL == "gene" else "kallisto_"
+    return f"resources/RNA/{lv}counts_NTM_train{sfx}_{wc.minCount_expr}_{wc.minSamples_expr}.tsv"
 
-####
+def counts_test(wc):
+    sfx = "_combat" if BC_RNA else ""
+    lv  = "genelevel/genelevel_" if LEVEL == "gene" else "kallisto_"
+    return f"resources/RNA/{lv}counts_NTM_test{sfx}_{wc.minCount_expr}_{wc.minSamples_expr}.tsv"
 
-def get_txid_heatmap_outputs(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.generate_feature_heatmap.output, TxID=txids, **wildcards)
+def integrated_h5(wc=None):
+    return ("resources/integrated_wgbs_hdf5/integrated_wgbs_combat.h5" if BC_METH
+            else "resources/integrated_wgbs_hdf5/integrated_wgbs.h5")
 
-def get_txid_train_outputs(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.train_models.output.plot_path, TxID=txids, **wildcards)
+def get_txid_xgb_input_clustered_NTM(wildcards):
+    txids = txids_from_checkpoint_second_round_NTM(wildcards)
+    return expand(
+        "data/xgb_clustered" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}_xgb_input_clustered_{set}.txt",
+        TxID=txids, set=["train", "test"], **wildcards
+    )
 
-def get_txid_extract_CpGs(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.extract_CpGs_from_output.output.coords, TxID=txids, **wildcards)
-
-def get_txid_gtf(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.get_TxID_specific_gtf.output, TxID=txids, **wildcards)
-
-def get_txid_generate_tracks(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.generate_genome_tracks.output, TxID=txids, **wildcards)
-
-def get_txid_prepare_TSSs(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.prepare_TSSs_to_plot_tracks.output, TxID=txids, **wildcards)
-
-def get_txid_slop_TSSs(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.slop_TSSs.output, TxID=txids, **wildcards)
-
-def get_txid_ini(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.generate_ini_file.output, TxID=txids, **wildcards)
-
-def get_txid_plot_tracks(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.plot_genome_tracks.output, TxID=txids, **wildcards)
-
-def get_txid_corr_meth(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.corr_meth_expr.output[0], TxID=txids, **wildcards)
-
-def get_txid_process_corr(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.process_corr_meth_expr.output[0], TxID=txids, **wildcards)
-
-def get_txid_cluster_corr(wildcards):
-    txids = txids_from_checkpoint_third_round(wildcards)
-    return expand(rules.cluster_corr_meth_expr.output[0], TxID=txids, **wildcards)
+ruleorder: filter_CpGs_by_mappability > sort_CpGs > slop_TSSs_window > filter_TSSs > sort_TSSs > get_TSSs
+if CLUSTER:
+    ruleorder: merge_CpGs > identity_CpGs_map
+else:
+    ruleorder: identity_CpGs_map > merge_CpGs
 
 
-include: "rules/filter_selected_TxIDs.smk"
 
+wildcard_constraints:
+    assembly_code = "hg\\d{2}"
+
+rule all:
+    input:
+        # integration always runs
+        "resources/integrated_wgbs_hdf5/integrated_wgbs.h5",
+        "resources/integrated_wgbs_hdf5/integrated_wgbs_rowRanges.rds",
+        "resources/integrated_wgbs_hdf5/integrated_wgbs_colData.rds",
+        "resources/integrated_wgbs_hdf5/integrated_wgbs_train_fit.rds",
+        expand(
+            "resources/reference_data/gencode/gencode.v{gencode_version}.annotation.gff3.gz",
+            gencode_version=gencode_versions
+        ),
+        expand(
+            "resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}.bed",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets
+        ),
+        expand(
+            "resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}.sorted.bed",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets
+        ),
+        expand(
+            "resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}.sorted.filtered.bed",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "resources/TxIDs/{minCount_expr}_{minSamples_expr}_f_selected_TxIDs",
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "resources/RNA/kallisto_counts_NTM_train_{minCount_expr}_{minSamples_expr}.tsv",
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "resources/RNA/kallisto_counts_NTM_test_{minCount_expr}_{minSamples_expr}.tsv",
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        "resources/split/split_summary.tsv",
+        expand(
+            "results/plots/batch_correct/rna_combat_by_dataset_{minCount_expr}_{minSamples_expr}.pdf",
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ) if BC_RNA else [],
+        expand(
+            "resources/reference_data/mappability/{assembly_code}_k100.bismap.bedgraph",
+            assembly_code=assembly_codes
+        ),
+        expand(
+            "resources/reference_data/mappability/{assembly_code}_k100.bismap.filtered.bedgraph",
+            assembly_code=assembly_codes
+        ),
+        expand(
+            "resources/CpG_data/coord/{assembly_code}.bed",
+            assembly_code=assembly_codes
+        ),
+        expand(
+            "resources/CpG_data/coord/{assembly_code}.sorted.bed",
+            assembly_code=assembly_codes
+        ),
+        expand(
+            "resources/reference_data/{assembly_code}.chrom.sizes",
+            assembly_code=assembly_codes
+        ),
+        expand(
+            "resources/reference_data/{assembly_code}.chrom.clean.sizes",
+            assembly_code=assembly_codes
+        ),
+        expand(
+            "resources/reference_data/gencode/{assembly_code}_v{gencode_version}_{tss_subset}_{minCount_expr}_{minSamples_expr}_{distance}.window.bed",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs,
+            distance=distances
+        ),
+        expand(
+            "resources/CpG_data/top_K/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}.bed",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "resources/TxIDs/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_ff_selected_TxIDs",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "results/plots/filtering/nCpGs/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}.pdf",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "results/plots/filtering/distance/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}.pdf",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "resources/CpG_data/top_K/checks/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "data/checks/rse_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        [] if not CLUSTER else expand(
+            "data/checks/corr_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "data/checks/merge_CpGs_NTM" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "data/checks/xgb_clustered" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "results/plots/clustering" + TAG + "/n_clusters_per_txid/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}.pdf",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs
+        ),
+        expand(
+            "results/checks/model_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}",
+            assembly_code=assembly_codes,
+            gencode_version=gencode_versions,
+            tss_subset=tss_subsets,
+            distance=distances,
+            minCount_expr=minCount_exprs,
+            minSamples_expr=minSamples_exprs,
+            CV=CVs
+        ),
+        expand(
+            "data/to_methyldriver" + TAG + "/selected_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.bed",
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+         expand(
+            "data/to_methyldriver" + TAG + "/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv",
+            comparison=list(config["delta_comparisons"].keys()),
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+        expand(
+            "results/methyldriver" + TAG + "/{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.rds",
+            comparison=list(config["delta_comparisons"].keys()),
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+        expand(
+            "results/methyldriver" + TAG + "/volcano_{comparison}_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.pdf",
+            comparison=list(config["delta_comparisons"].keys()),
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        ),
+        expand(
+            "results/gimme" + TAG + "/scan_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.tsv",
+            assembly_code=assembly_codes, gencode_version=gencode_versions,
+            tss_subset=tss_subsets, distance=distances,
+            minCount_expr=minCount_exprs, minSamples_expr=minSamples_exprs, CV=CVs
+        )
+
+rule all_unpack_topK_NTM:
+    input:
+        get_txid_unpack_topK_NTM
+    output:
+        "resources/CpG_data/top_K/checks/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output}
+        """
+
+rule all_unpack_RSE_NTM:
+    input:
+        get_txid_unpack_RSE_NTM
+    output:
+        "data/checks/rse_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output}
+        """
+rule all_compute_pairwise_correlation:
+    input:
+        get_txid_compute_pairwise_correlation
+    output:
+        "data/checks/corr_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output}
+        """
+rule all_merge_CpGs_NTM:
+    input:
+        get_txid_merge_CpGs_NTM
+    output:
+        "data/checks/merge_CpGs_NTM" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output}
+        """
+
+rule all_xgb_input_clustered_NTM:
+    input:
+        get_txid_xgb_input_clustered_NTM
+    output:
+        "data/checks/xgb_clustered" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}"
+    shell:
+        """
+        echo {input} >> {output}
+        """
+rule all_model_selection:
+    input:
+        get_txid_model_selection
+    output:
+        "results/checks/model_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}"
+    shell:
+        """
+        echo {input} >> {output}
+        """
+
+
+include: "rules/integrate_datasets_split.smk"
+include: "rules/filter_counts_NTM_split.smk"
+include: "rules/filter_selected_TxIDs_NTM.smk"
 include: "rules/get_gencode_annotation.smk"
 include: "rules/get_TSSs.smk"
 include: "rules/sort_TSSs.smk"
 include: "rules/filter_TSSs.smk"
-
-include: "rules/filter_counts.smk"
-
 include: "rules/get_mappability.smk"
 include: "rules/filter_mappability.smk"
-include: "rules/filter_CpGs_by_mappability.smk"
+include: "rules/filter_CpGs_by_mappability_NTM.smk"
 include: "rules/sort_CpGs.smk"
-
-include: "rules/get_K_closest_CpGs.smk"
-include: "rules/unpack_topK.smk"
-
-include: "rules/filter_selected_TxIDs_second_round.smk"
-include: "rules/unpack_RSE.smk"
-include: "rules/get_TxIDs_to_exclude.smk"
-include: "rules/xgb_input.smk"
-
-include: "rules/filter_selected_TxIDs_third_round.smk"
-
-include: "rules/corr_meth_expr.smk"
-include: "rules/aggregate_corr_meth_expr.smk"
-include: "rules/process_corr_meth_expr_new.smk"
-include: "rules/cluster_corr_meth_expr_new.smk"
-include: "rules/aggregate_clusters.smk"
-
-include: "rules/train_models.smk"
-
-include: "rules/generate_feature_heatmap.smk"
-
-include: "rules/aggregate_models_output.smk"
-include: "rules/plot_models_output.smk"
-
 include: "rules/get_chrom_sizes.smk"
 include: "rules/clean_chrom_sizes.smk"
+include: "rules/slop_TSSs_window.smk"
+include: "rules/intersect_CpGs_TSSs.smk"
+include: "rules/filter_selected_TxIDs_second_round_NTM.smk"
+include: "rules/unpack_topK_NTM.smk"
+include: "rules/unpack_RSE_NTM.smk"
+include: "rules/compute_pairwise_correlation_split.smk"
+include: "rules/merge_CpGs_split.smk"
+include: "rules/identity_CpGs_map.smk"
+include: "rules/build_genelevel_counts.smk"
+include: "rules/plot_n_clusters_per_txid.smk"
+include: "rules/xgb_input_clustered_split.smk"
+include: "rules/model_selection_split.smk"
+include: "rules/split_samples.smk"
+include: "rules/batch_correct_rna.smk"
+include: "rules/export_wgbs_samples.smk"
+include: "rules/batch_correct_meth.smk"
+include: "rules/export_meth_metadata.smk"
+include: "rules/selected_features_to_bed.smk"
+include: "rules/cluster_delta_methylation.smk"
+include: "rules/methyldriver_neighbors.smk"
+include: "rules/run_methyldriver.smk"
+include: "rules/gimme_scan.smk"
 
-include: "rules/get_TxID_specific_gtf.smk"
-
-include: "rules/extract_CpGs_from_output.smk"
-include: "rules/generate_genome_tracks.smk"
-
-include: "rules/prepare_TSSs_to_plot_tracks.smk"
-include: "rules/slop_TSSs.smk"
-
-include: "rules/generate_ini_file.smk"
-include: "rules/plot_genome_tracks.smk"
-
-include: "rules/garbage_collector.smk"
-
-include: "rules/get_CpG_Tx_pairs.smk"
-include: "rules/get_composite_coordinates.smk"
-include: "rules/get_sel_feats_coordinates.smk"
-include: "rules/get_pairs_with_coords.smk"
-include: "rules/sort_pairs_with_coords.smk"
-include: "rules/slop_pairs_with_coords.smk"
-include: "rules/prepare_pairs_with_coords.smk"
-
-include: "rules/get_genome_for_GRN.smk"
-include: "rules/get_gimme.smk"
-include: "rules/process_gimme.smk"
-
-include: "rules/get_GRN.smk"
-
-assembly_codes = config["assembly_codes"]
-gencode_versions = config["gencode_versions"]
-tss_subsets = config["tss_subsets"]
-sample_types = config["sample_types"]
-distances = config["distances"]
-min_CpGs = config["min_CpGs"]
-K_closests = config["K_closests"]
-leftCount_betas = config["leftCount_betas"]
-rightCount_betas = config["rightCount_betas"]
-minCount_exprs = config["minCount_exprs"]
-minSamples_betas = config["minSamples_betas"]
-minCovs = config["minCovs"]
-minSamples_exprs = config["minSamples_exprs"]
-importances = config["importances"]
-use_TMRs = config["use_TMRs"][0]
-test_sizes = config["test_sizes"]
-CVs = config["CVs"]
-
-rule all:
-    input:
-        expand(
-            "resources/checks/generate/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}",
-                assembly_code=assembly_codes,
-                gencode_version=gencode_versions,
-                tss_subset=tss_subsets,
-                distance=distances,
-                min_CpG = min_CpGs,
-                sample_type=sample_types,
-                leftCount_beta = leftCount_betas,
-                rightCount_beta = rightCount_betas,
-                minSamples_beta = minSamples_betas,
-                minCov = minCovs,
-                minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs,
-                K_closest=K_closests
-        ),
-        expand(
-            "results/GRN/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}",
-                assembly_code=assembly_codes,
-                gencode_version=gencode_versions,
-                tss_subset=tss_subsets,
-                distance=distances,
-                min_CpG = min_CpGs,
-                sample_type=sample_types,
-                leftCount_beta = leftCount_betas,
-                rightCount_beta = rightCount_betas,
-                minSamples_beta = minSamples_betas,
-                minCov = minCovs,
-                minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs,
-                K_closest=K_closests,
-                test_size=test_sizes,
-                CV=CVs
-        ),
-        expand(
-            "results/corr_meth_expr/bed/clustered/aggr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}", 
-                assembly_code=assembly_codes,
-                gencode_version=gencode_versions,
-                tss_subset=tss_subsets,
-                distance=distances,
-                min_CpG = min_CpGs,
-                sample_type=sample_types,
-                leftCount_beta = leftCount_betas,
-                rightCount_beta = rightCount_betas,
-                minSamples_beta = minSamples_betas,
-                minCov = minCovs,
-                minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs,
-                K_closest=K_closests,
-                test_size=test_sizes,
-                CV=CVs
-        ),
-        expand(
-            "results/checks/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{importance}",
-                assembly_code=assembly_codes,
-                gencode_version=gencode_versions,
-                tss_subset=tss_subsets,
-                distance=distances,
-                min_CpG = min_CpGs,
-                sample_type=sample_types,
-                leftCount_beta = leftCount_betas,
-                rightCount_beta = rightCount_betas,
-                minSamples_beta = minSamples_betas,
-                minCov = minCovs,
-                minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs,
-                K_closest=K_closests,
-                test_size=test_sizes,
-                CV=CVs,
-                importance=importances
-        ),
-        expand(
-            "results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}",
-                assembly_code=assembly_codes,
-                gencode_version=gencode_versions,
-                tss_subset=tss_subsets,
-                distance=distances,
-                min_CpG = min_CpGs,
-                sample_type=sample_types,
-                leftCount_beta = leftCount_betas,
-                rightCount_beta = rightCount_betas,
-                minSamples_beta = minSamples_betas,
-                minCov = minCovs,
-                minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs,
-                K_closest=K_closests
-        ),
-        expand(
-            "results/plots/ML/hyper/density/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}.pdf",
-                assembly_code=assembly_codes,
-                gencode_version=gencode_versions,
-                tss_subset=tss_subsets,
-                distance=distances,
-                min_CpG = min_CpGs,
-                sample_type=sample_types,
-                leftCount_beta = leftCount_betas,
-                rightCount_beta = rightCount_betas,
-                minSamples_beta = minSamples_betas,
-                minCov = minCovs,
-                minCount_expr=minCount_exprs,
-                minSamples_expr=minSamples_exprs,
-                K_closest=K_closests,
-                test_size=test_sizes,
-                CV=CVs
-        )
-
-rule all_unpack_topK:
-    input:
-        get_txid_unpack_topK,
-    output:
-        all_done_txid="resources/CpG_data/top_K/checks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule all_unpack_RSE:
-    input:
-        get_txid_unpack_rse,
-    output:
-        all_done_txid="data/checks/rse/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule all_xgb_inputs:
-    input:
-        get_txid_xgb_input,
-    output:
-        all_done_txid="data/checks/xgb/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule plot_all_heatmaps:
-    input:
-        get_txid_heatmap_outputs
-    output:
-        all_done_txid="results/checks/heatmap/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule run_all_models:
-    input:
-        get_txid_train_outputs
-    output:
-        all_done_txid="results/checks/train/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule extract_all_CpGs:
-    input:
-        get_txid_extract_CpGs
-    output:
-        all_done_txid="results/checks/extract/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule generate_all_gtfs:
-    input:
-        get_txid_gtf
-    output:
-        all_done_txid="resources/checks/generate/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule generate_all_tracks:
-    input:
-        get_txid_generate_tracks
-    output:
-        all_done_txid="results/checks/generate/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{importance}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule prepare_all_TSSs:
-    input:
-        get_txid_prepare_TSSs
-    output:
-        all_done_txid="results/checks/prepare/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{importance}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule slop_all_TSSs:
-    input:
-        get_txid_slop_TSSs
-    output:
-        all_done_txid="results/checks/slop/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{importance}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule generate_all_inis:
-    input:
-        get_txid_ini
-    output:
-        all_done_txid="results/checks/ini/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{importance}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule plot_all_tracks:
-    input:
-        get_txid_plot_tracks
-    output:
-        all_done_txid="results/checks/tracks/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}_{importance}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule all_corr_meth:
-    input:
-        get_txid_corr_meth,
-    output:
-        all_done_txid="results/checks/corr_meth_expr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule process_all_corr:
-    input:
-         get_txid_process_corr,
-    output:
-        all_done_txid="results/checks/corr/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
-
-rule cluster_all_corr:
-    input:
-         get_txid_cluster_corr,
-    output:
-        all_done_txid="results/checks/cluster/{assembly_code}_{sample_type}_{leftCount_beta}_{rightCount_beta}_{minSamples_beta}_{minCov}_v{gencode_version}_{tss_subset}_{distance}_{min_CpG}_{minCount_expr}_{minSamples_expr}_{K_closest}_{test_size}_{CV}"
-    shell:
-        """
-        echo {input} >> {output.all_done_txid}
-        """
 
 wildcard_constraints:
     assembly_code="hg\\d{2}",
@@ -462,5 +449,5 @@ wildcard_constraints:
     importance="[a-z]+",
     K_closest="[0-9]+",
     CV="[0-9]+",
-    test_size="\\d+(\\.\\d+)?"
-
+    test_size="\\d+(\\.\\d+)?",
+    comparison="|".join(config["delta_comparisons"].keys()),
