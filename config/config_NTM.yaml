@@ -43,6 +43,8 @@ minCovs:
 minSamples_exprs:
   - 10
 
+sd_quantile_expr: 0.25   # gene level only: drop modelled genes below this quantile of expression SD (train, after ComBat); 0 = off
+
 importances:
   - "shap"
 
@@ -86,10 +88,10 @@ n_repeats:
   - 5                 # RepeatedKFold: CVs folds x n_repeats (model_selection_split_kbest_repeated_kcapped.py)
 
 # ---- modelling level and CpG clustering ----
-level: transcript     # transcript: one model per selected TxID, transcript counts
+level: gene     # transcript: one model per selected TxID, transcript counts
                       # gene: one model per gene, on its representative TxID (build_genelevel_counts.py), gene counts
 skip_shap: 0          # 0: compute SHAP values; 1: skip them (the shap file is written with NaN)
-cluster_cpgs: 0       # 1: cluster co-methylated CpGs (compute_pairwise_correlation + merge_CpGs); 0: every CpG is a feature
+cluster_cpgs: 1       # 1: cluster co-methylated CpGs (compute_pairwise_correlation + merge_CpGs); 0: every CpG is a feature
 
 cpgea_wgbs_location:
   - "resources/cpgea_wgbs_merged_hg38"     # .stat values + read counts, gaps filled from WGBS.CG (build_cpgea_merged_se.R)

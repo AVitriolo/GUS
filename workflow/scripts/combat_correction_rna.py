@@ -35,7 +35,13 @@ p.add_argument("--out_test", required=True)
 p.add_argument("--out_params", default=None)
 p.add_argument("--out_plot_ds", default=None)
 p.add_argument("--out_plot_cond", default=None)
+p.add_argument("--sd_quantile", type=float, default=0.0,
+               help="drop genes below this quantile of SD on the corrected TRAIN matrix (0 = off)")
+p.add_argument("--sd_row_prefix", default="",
+               help="compute the quantile and filter only among rows with this prefix "
+                    "(gene level: 'ENST' = genes with a representative TxID, i.e. the modelled ones)")
 args = p.parse_args()
+assert 0.0 <= args.sd_quantile < 1.0, "--sd_quantile must be in [0, 1)"
 
 for f in (args.out_train, args.out_test):
     os.makedirs(os.path.dirname(f) or ".", exist_ok=True)
@@ -81,9 +87,20 @@ print("Applying TRAIN-fitted parameters to train and test ...")
 train_corr = combat_apply(train.values, b_train, fit, covar_mod=None)
 test_corr = combat_apply(test.values, b_test, fit, covar_mod=None)
 
-pd.DataFrame(train_corr, index=train.index, columns=train.columns) \
+# ---- optional variability filter (TRAIN ONLY, after ComBat so batch variance is not counted) ----
+keep = np.ones(train.shape[0], dtype=bool)
+if args.sd_quantile > 0:
+    sd = train_corr.std(axis=1, ddof=1)
+    pool = train.index.str.startswith(args.sd_row_prefix)
+    thr = np.quantile(sd[pool], args.sd_quantile)
+    keep = ~pool | (sd > thr)
+    print(f"SD filter (train, after ComBat): quantile {args.sd_quantile:.2f} of {pool.sum()} "
+          f"'{args.sd_row_prefix}*' rows -> SD threshold {thr:.4f}; removed {(~keep).sum()}, "
+          f"kept {pool.sum() - (~keep).sum()} of them")
+
+pd.DataFrame(train_corr[keep], index=train.index[keep], columns=train.columns) \
     .to_csv(args.out_train, sep="\t")
-pd.DataFrame(test_corr, index=test.index, columns=test.columns) \
+pd.DataFrame(test_corr[keep], index=test.index[keep], columns=test.columns) \
     .to_csv(args.out_test, sep="\t")
 
 if args.out_params:

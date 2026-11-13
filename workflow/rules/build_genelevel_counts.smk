@@ -71,6 +71,8 @@ rule batch_correct_rna_genelevel:   # batch_correct_rna on the gene counts (same
     input:
         counts_train = "resources/RNA/genelevel/genelevel_counts_NTM_train_{minCount_expr}_{minSamples_expr}.tsv",
         counts_test  = "resources/RNA/genelevel/genelevel_counts_NTM_test_{minCount_expr}_{minSamples_expr}.tsv"
+    params:
+        sd_quantile_expr = config.get("sd_quantile_expr", 0)
     conda:
         "../envs/py_combat.yml"
     log:
@@ -84,5 +86,7 @@ rule batch_correct_rna_genelevel:   # batch_correct_rna on the gene counts (same
         --out_test={output.counts_test} \
         --out_params={output.params_npz} \
         --out_plot_ds={output.plot_ds} \
-        --out_plot_cond={output.plot_cond} 2> {log}
+        --out_plot_cond={output.plot_cond} \
+        --sd_quantile={params.sd_quantile_expr} \
+        --sd_row_prefix=ENST 2> {log}
         """
