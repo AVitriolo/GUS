@@ -14,7 +14,7 @@ rule methyldriver_neighbors:            # runs ONCE
     log: "logs/methyldriver/neighbors_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.log"
     shell:
         """
-        export TMPDIR=/home/Prostate_GAS/resources/beegfs_scratch/tmp_gimme
+        export TMPDIR="$PWD/resources/beegfs_scratch/tmp_gimme"   # inside the clone (was a hardcoded local path)
         mkdir -p "$TMPDIR"
         Rscript workflow/scripts/build_neighbors.R \
         --input_bed={input.bed} --bigwig_dir={params.bigwig_dir} \
