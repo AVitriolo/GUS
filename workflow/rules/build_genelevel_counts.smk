@@ -61,7 +61,7 @@ rule filter_counts_NTM_genelevel:   # filter_counts_NTM on the gene counts (same
         --output_path_tmm_fit={output.tmm_fit} 2> {log}
         """
 
-rule batch_correct_rna_genelevel:   # batch_correct_rna on the gene counts (same script)
+checkpoint batch_correct_rna_genelevel:   # batch_correct_rna on the gene counts (same script); checkpoint: the SD filter decides which genes are modelled
     output:
         counts_train = "resources/RNA/genelevel/genelevel_counts_NTM_train_combat_{minCount_expr}_{minSamples_expr}.tsv",
         counts_test  = "resources/RNA/genelevel/genelevel_counts_NTM_test_combat_{minCount_expr}_{minSamples_expr}.tsv",

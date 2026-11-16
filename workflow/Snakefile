@@ -50,7 +50,22 @@ def txids_from_checkpoint_second_round_NTM(wildcards):
         with open(rep_path) as f:
             keep = {l.split("\t")[0] for l in f if not l.startswith("TxID")}
         txids = [t for t in txids if t in keep]
+        if BC_RNA and float(config.get("sd_quantile_expr", 0)) > 0:   # genes removed by the SD filter are not modelled
+            counts_path = checkpoints.batch_correct_rna_genelevel.get(
+                minCount_expr   = wildcards.minCount_expr,
+                minSamples_expr = wildcards.minSamples_expr
+            ).output.counts_train
+            kept = _matrix_rows(counts_path)
+            txids = [t for t in txids if t in kept]
     return txids
+
+_ROWS_CACHE = {}
+def _matrix_rows(path):   # row names of a genes x samples tsv (first column), read once per path
+    if path not in _ROWS_CACHE:
+        with open(path) as f:
+            next(f)
+            _ROWS_CACHE[path] = {l.split("\t", 1)[0] for l in f}
+    return _ROWS_CACHE[path]
 
 def get_txid_unpack_topK_NTM(wildcards):
     txids = txids_from_checkpoint_second_round_NTM(wildcards)
