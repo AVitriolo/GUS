@@ -1,0 +1,10 @@
+# stability selection summary / region stability (stability_selection_summary.R, stability_selection_regions.R):
+# Nogueira stability index (stabm) and the complementary-pairs PFER bound (stabs)
+name: r_stability
+channels:
+  - conda-forge
+dependencies:
+  - r-base=4.3
+  - r-stabm
+  - r-stabs
+  - r-data.table

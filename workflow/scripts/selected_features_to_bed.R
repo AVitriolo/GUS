@@ -57,8 +57,9 @@ for (f in sel_files) {
     for (feat in feats) {
         n_feat <- n_feat + 1L
         # feat = "<TxID>_<cluster_id>"  ->  split on the LAST underscore
-        txid <- sub("_[^_]+$", "", feat)
-        cid  <- sub(".*_", "", feat)
+        # split on the FIRST underscore: TxIDs have none, while feature IDs may (single CpGs are chr_pos)
+        txid <- sub("_.*", "", feat)
+        cid  <- sub("^[^_]+_", "", feat)
 
         m <- get_map(txid)
         if (length(m) == 1 && is.na(m)) { n_missing_map <- n_missing_map + 1L; next }
