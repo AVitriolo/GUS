@@ -124,10 +124,13 @@ def get_txid_xgb_input_clustered_NTM(wildcards):
     )
 
 ruleorder: filter_CpGs_by_mappability > sort_CpGs > slop_TSSs_window > filter_TSSs > sort_TSSs > get_TSSs
-if CLUSTER:
-    ruleorder: merge_CpGs > identity_CpGs_map
+FAST_CLUSTER = int(config.get("fast_clustering", 0))
+if CLUSTER and FAST_CLUSTER:   # merge_CpGs_fast: same cluster maps, no correlation-matrix files
+    ruleorder: merge_CpGs_fast > merge_CpGs > identity_CpGs_map
+elif CLUSTER:
+    ruleorder: merge_CpGs > merge_CpGs_fast > identity_CpGs_map
 else:
-    ruleorder: identity_CpGs_map > merge_CpGs
+    ruleorder: identity_CpGs_map > merge_CpGs > merge_CpGs_fast
 
 
 
@@ -264,24 +267,9 @@ rule all:
             minCount_expr=minCount_exprs,
             minSamples_expr=minSamples_exprs
         ),
-        expand(
-            "data/checks/rse_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
-            assembly_code=assembly_codes,
-            gencode_version=gencode_versions,
-            tss_subset=tss_subsets,
-            distance=distances,
-            minCount_expr=minCount_exprs,
-            minSamples_expr=minSamples_exprs
-        ),
-        [] if not CLUSTER else expand(
-            "data/checks/corr_NTM/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
-            assembly_code=assembly_codes,
-            gencode_version=gencode_versions,
-            tss_subset=tss_subsets,
-            distance=distances,
-            minCount_expr=minCount_exprs,
-            minSamples_expr=minSamples_exprs
-        ),
+        # no data/checks/rse_NTM or data/checks/corr_NTM targets: their aggregation rules list every gene's RSE /
+        # correlation matrix as input, so these temp() files would all be kept until the very end (hundreds of GB -
+        # TB at +-1 Mb). The per-gene RSEs and matrices are still built as inputs of the clustering / model steps.
         expand(
             "data/checks/merge_CpGs_NTM" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}",
             assembly_code=assembly_codes,
@@ -431,6 +419,7 @@ include: "rules/unpack_topK_NTM.smk"
 include: "rules/unpack_RSE_NTM.smk"
 include: "rules/compute_pairwise_correlation_split.smk"
 include: "rules/merge_CpGs_split.smk"
+include: "rules/merge_CpGs_fast.smk"
 include: "rules/identity_CpGs_map.smk"
 include: "rules/build_genelevel_counts.smk"
 include: "rules/plot_n_clusters_per_txid.smk"

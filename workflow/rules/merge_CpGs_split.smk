@@ -13,6 +13,7 @@ rule merge_CpGs:
     threads: 2
     conda:
         "../envs/r_merge_CpGs.yml"
+    priority: 30   # finish a gene (unpack -> corr -> clusters -> matrix -> model) before unpacking more: bounds temp RSEs on disk
     log:
         "logs/merge_CpGs/merge_CpGs_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}.log"
     shell:

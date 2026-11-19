@@ -1,11 +1,9 @@
 STABLE_ONLY = int(config.get("stable_only", 1))   # 1: methyldriver / gimme use only the stably selected CpGs
-if STABLE_ONLY:
-    assert not CLUSTER, "stable_only = 1 needs cluster_cpgs: 0 (stability selection works on single CpGs)"
 
-def sel_feats_input(wc):
-    if STABLE_ONLY:
-        return rules.stable_sel_feats.output[0]
-    return "results/checks/model_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}"
+def sel_feats_input(wc):   # input functions get no wildcard expansion: format the pattern here
+    pattern = (STABLE_SEL_DIR if STABLE_ONLY else
+               "results/checks/model_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}")
+    return pattern.format(**wc)
 
 rule selected_features_to_bed:
     output:

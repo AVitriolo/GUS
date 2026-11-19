@@ -16,8 +16,10 @@ rule model_selection:
         n_repeats      = config["n_repeats"][0],
         models_dir     = "results/models" + TAG,
         skip_shap      = "--skip_shap" if int(config.get("skip_shap", 0)) else ""
+    threads: int(config["n_jobs_xgboost"][0])   # = --n_jobs of the random search, so --cores is not oversubscribed
     conda:
         "../envs/py_ML.yml"
+    priority: 50   # finish a gene (unpack -> corr -> clusters -> matrix -> model) before unpacking more: bounds temp RSEs on disk
     log:
         "logs/model_selection/model_selection_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}_{TxID}.log"
     shell:

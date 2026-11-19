@@ -11,6 +11,7 @@ rule xgb_input_clustered_split:
         test         = "resources/split/test_samples.txt"
     conda:
         "../envs/r_merge_CpGs.yml"
+    priority: 40   # finish a gene (unpack -> corr -> clusters -> matrix -> model) before unpacking more: bounds temp RSEs on disk
     log:
         "logs/xgb_input_clustered/xgb_input_clustered_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{TxID}.log"
     shell:

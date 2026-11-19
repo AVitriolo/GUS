@@ -6,7 +6,10 @@
 #   4. stability_selection_regions.R  region-level frequency + PFER cutoff (region_freq_corr<r>.tsv)
 #   5. stable_sel_feats.py            each model's selected CpGs lying in a stable region -> sel_feats format
 # selected_features_to_bed (-> methyldriver, gimme) reads 5. when stable_only = 1.
-# Works on single CpGs only (cluster_cpgs: 0).
+# cluster_cpgs: 0 -> the chain above, on single CpGs (as the genestd run).
+# cluster_cpgs: 1 -> candidates are the model's cluster features: step 1 = stability_selection_features.py on the
+#                    model's own training matrix, steps 3-4 are skipped (a cluster is already a co-methylated
+#                    region), step 5 = stable_sel_feats_features.py (features with frequency >= the PFER cutoff).
 
 STAB_DIR    = "results/stability_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}"
 STAB_SHARDS = int(config.get("stability_shards", 24))
@@ -34,7 +37,33 @@ rule h5_cpg_positions:
     shell:
         "Rscript workflow/scripts/h5_cpg_positions.R {input} {output} > {log} 2>&1"
 
-rule stability_kbest:
+rule stability_kbest_features:   # cluster_cpgs: 1
+    output:
+        sel  = STAB_DIR + "/subsample_selections_shard{shard}.tsv",
+        cand = STAB_DIR + "/candidates_shard{shard}.tsv"
+    input:
+        sel_check = "results/checks/model_selection" + TAG + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}",
+        coldata   = "resources/integrated_wgbs_hdf5/meth_colData.tsv"
+    params:
+        sel_dir  = "results/sel_feats" + TAG,
+        xgb_dir  = "data/xgb_clustered" + TAG,
+        prefix   = stab_prefix,
+        out_dir  = STAB_DIR,
+        n_shards = STAB_SHARDS,
+        n_pairs  = STAB_PAIRS
+    conda:
+        "../envs/py_combat.yml"
+    log:
+        "logs/stability_selection/kbest_features_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}_shard{shard}.log"
+    shell:
+        """
+        python workflow/scripts/stability_selection_features.py \
+        --sel_dir={params.sel_dir} --xgb_dir={params.xgb_dir} --prefix={params.prefix} \
+        --coldata={input.coldata} --n_pairs={params.n_pairs} \
+        --shard={wildcards.shard}/{params.n_shards} --out_dir={params.out_dir} > {log} 2>&1
+        """
+
+rule stability_kbest:   # cluster_cpgs: 0
     output:
         sel  = STAB_DIR + "/subsample_selections_shard{shard}.tsv",
         cand = STAB_DIR + "/candidates_shard{shard}.tsv"
@@ -126,21 +155,30 @@ rule stability_regions:
         "Rscript analyses/scripts/stability_selection_regions.R {params.in_dir} {params.cand_dir} "
         + str(STAB_GAP) + " " + str(STAB_PAIRS) + " " + str(STAB_PFER) + " {threads} corr" + STAB_CORR + " > {log} 2>&1"
 
+if CLUSTER:
+    ruleorder: stability_kbest_features > stability_kbest
+else:
+    ruleorder: stability_kbest > stability_kbest_features
+
+STABLE_SEL_DIR = ("results/sel_feats" + TAG + ("_stable" if CLUSTER else "_stable_corr" + STAB_CORR)
+                  + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}")
+
 rule stable_sel_feats:
     output:
-        directory("results/sel_feats" + TAG + "_stable_corr" + STAB_CORR + "/{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}")
+        directory(STABLE_SEL_DIR)
     input:
         freq    = STAB_DIR + "/cpg_freq.tsv",
-        regions = STAB_DIR + "/region_freq_corr" + STAB_CORR + ".tsv"
+        regions = [] if CLUSTER else STAB_DIR + "/region_freq_corr" + STAB_CORR + ".tsv"
     params:
         stab_dir = STAB_DIR,
-        prefix   = lambda wc: stab_prefix(wc) + f"_{wc.CV}"
+        prefix   = lambda wc: stab_prefix(wc) + f"_{wc.CV}",
+        cmd      = ("workflow/scripts/stable_sel_feats_features.py" if CLUSTER
+                    else "analyses/scripts/stable_sel_feats.py --tag=corr" + STAB_CORR)
     conda:
         "../envs/py_combat.yml"
     log:
         "logs/stability_selection/stable_sel_feats_{assembly_code}_v{gencode_version}_{tss_subset}_{distance}_{minCount_expr}_{minSamples_expr}_{CV}.log"
     shell:
         """
-        python analyses/scripts/stable_sel_feats.py --stab_dir={params.stab_dir} --out_dir={output} \
-        --tag=corr""" + STAB_CORR + """ --prefix={params.prefix} > {log} 2>&1
+        python {params.cmd} --stab_dir={params.stab_dir} --out_dir={output} --prefix={params.prefix} > {log} 2>&1
         """

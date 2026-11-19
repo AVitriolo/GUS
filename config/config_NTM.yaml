@@ -91,10 +91,12 @@ n_repeats:
 level: gene     # transcript: one model per selected TxID, transcript counts
                       # gene: one model per gene, on its representative TxID (build_genelevel_counts.py), gene counts
 skip_shap: 0          # 0: compute SHAP values; 1: skip them (the shap file is written with NaN)
-cluster_cpgs: 0       # 1: cluster co-methylated CpGs (compute_pairwise_correlation + merge_CpGs); 0: every CpG is a feature
+cluster_cpgs: 1       # 1: cluster co-methylated CpGs (compute_pairwise_correlation + merge_CpGs); 0: every CpG is a feature
+fast_clustering: 1    # 1: merge_CpGs_fast (correlation + clustering in one step, identical cluster maps, no GB-size matrices); 0: original two rules
+clustering_heatmap: 0  # merge_CpGs_fast only. 1: per-gene correlation heatmap PDF; 0: placeholder PDF (heatmap is ~70-90% of the runtime on genes with <= 500 clusters)
 
 # ---- stability selection: methyldriver / gimme on the stably selected CpGs only ----
-stable_only: 1         # 1: selected_features_to_bed reads the stable CpGs (needs cluster_cpgs: 0); 0: all selected features
+stable_only: 1         # 1: selected_features_to_bed reads the stable CpGs (clusters or CpGs, per cluster_cpgs); 0: all selected features
 stability_n_pairs: 100 # complementary pairs of half-samples (2 x n_pairs selections per gene), Shah & Samworth 2013
 stability_pfer: 1      # per-family error rate bound for the frequency cutoff (stabs::stabsel_parameters)
 stability_corr: 0.5    # co-methylated regions: adjacent CpGs with r >= this in train ...
